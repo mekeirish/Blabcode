@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050608">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon.png">
+<title>Labcode — Component Sandbox</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config={ theme:{ extend:{ fontFamily:{ inter:["Inter","sans-serif"] } } } }
+</script>
+<style>
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body{ width:100%; height:100%; margin:0; overflow:hidden; background:#050608; }
+body{ font-family:Inter,sans-serif; color:#f8fafc; background:#050608; position:relative; -webkit-user-select:none; user-select:none; }
+input, textarea{ -webkit-user-select:text; user-select:text; }
+
+/* ========================================================= AURORA ========================================================= */
+.aurora{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.aurora::before, .aurora::after, .aurora .orb{
+  content:""; position:absolute; border-radius:50%;
+  filter: blur(90px); opacity:.55; will-change:transform;
+}
+.aurora::before{ width:60vmax; height:60vmax; background: radial-gradient(circle, rgba(99,102,241,.35), transparent 65%); top:-20vmax; left:-15vmax; animation: auroraA 38s ease-in-out infinite; }
+.aurora::after{ width:55vmax; height:55vmax; background: radial-gradient(circle, rgba(168,85,247,.28), transparent 65%); bottom:-18vmax; right:-15vmax; animation: auroraB 46s ease-in-out infinite; }
+.aurora .orb{ width:45vmax; height:45vmax; background: radial-gradient(circle, rgba(37,99,235,.22), transparent 70%); top:35%; left:30%; animation: auroraC 52s ease-in-out infinite; }
+@keyframes auroraA{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(6vmax,4vmax) scale(1.12); } }
+@keyframes auroraB{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(-5vmax,-3vmax) scale(1.15); } }
+@keyframes auroraC{ 0%,100%{ transform: translate(-3vmax,2vmax) scale(1); } 50%{ transform: translate(4vmax,-4vmax) scale(1.08); } }
+.noise{
+  position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+button, input, textarea, select{ font-family:inherit; }
+button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
+.app{ position:relative; z-index:2; width:100%; height:100dvh; min-height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
+.app-inner{
+  width:100%; max-width:680px; height:100%; margin:auto;
+  padding: max(6px,env(safe-area-inset-top)) 8px max(6px,env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.glass{
+  background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+  border:1px solid rgba(255,255,255,.075);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 50px rgba(0,0,0,.28);
+  backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+}
+.glass-accent{
+  border:1px solid rgba(255,202,40,.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(255,202,40,.04), 0 18px 50px rgba(0,0,0,.28), 0 0 40px rgba(255,202,40,.06);
+}
+
+/* ========================================================= HEADER COMPACT ========================================================= */
+.header{
+  height:44px; min-height:44px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:5px; flex:0 0 auto;
+}
+.brand{ display:flex; align-items:center; gap:8px; min-width:0; }
+.brand-logo{
+  width:32px; height:32px; flex:0 0 32px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;
+  background: linear-gradient(145deg, rgba(255,202,40,.25), rgba(255,255,255,.025));
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow: 0 0 25px rgba(255,202,40,.13), inset 0 1px rgba(255,255,255,.08);
+}
+.brand-logo::after{
+  content:""; position:absolute; inset:-50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255,202,40,.35) 90deg, transparent 180deg, rgba(255,140,0,.35) 270deg, transparent 360deg);
+  animation: logoSpin 12s linear infinite; opacity:.5;
+}
+.brand-logo span{ font-size:14px; font-weight:800; position:relative; z-index:2; }
+@keyframes logoSpin{ to{ transform: rotate(360deg); } }
+.brand-name{ font-size:14px; line-height:15px; font-weight:800; letter-spacing:-.4px; }
+.brand-sub{ margin-top:1px; color:#64748b; font-size:5.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+.header-right{ display:flex; align-items:center; gap:5px; }
+.status-badge{
+  display:flex; align-items:center; gap:4px;
+  height:24px; padding:0 8px; border-radius:7px;
+  background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.06);
+  font-size:6px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  color:#64748b;
+}
+.status-badge .dot{ width:5px; height:5px; border-radius:50%; background:#475569; transition:.3s ease; }
+.status-badge.ok .dot{ background:#22c55e; box-shadow: 0 0 4px #22c55e, 0 0 8px rgba(34,197,94,.6); }
+.status-badge.ok{ color:#86efac; border-color:rgba(34,197,94,.2); }
+.status-badge.run .dot{ background:#facc15; box-shadow: 0 0 4px #facc15, 0 0 8px rgba(250,204,21,.6); animation: badgeBlink 1s infinite; }
+.status-badge.run{ color:#fcd34d; border-color:rgba(250,204,21,.2); }
+.status-badge.err .dot{ background:#ef4444; box-shadow: 0 0 4px #ef4444, 0 0 8px rgba(239,68,68,.6); }
+.status-badge.err{ color:#fca5a5; border-color:rgba(239,68,68,.2); }
+@keyframes badgeBlink{ 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
+/* BOUTONS HEADER 44px (Apple HIG) */
+.header-btn{
+  width:42px; height:42px; flex:0 0 42px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  color:#fcd34d; font-size:15px;
+  transition:.2s ease; cursor:pointer;
+  background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.06);
+}
+.header-btn:active{ transform:scale(.94); background:rgba(255,202,40,.13); }
+
+/* ========================================================= TABS (gros) ========================================================= */
+.tabs{
+  display:flex; gap:4px; padding:3px; border-radius:13px;
+  background:rgba(0,0,0,.32); border:1px solid rgba(255,255,255,.06);
+  flex:0 0 auto; margin-bottom:5px;
+}
+.tab-btn{
+  flex:1; height:42px; border-radius:10px;
+  background:transparent; border:1px solid transparent;
+  color:#64748b; font-size:8px; font-weight:800;
+  letter-spacing:.1em; text-transform:uppercase;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  transition:.2s ease;
+}
+.tab-btn.active{
+  color:#fcd34d; background:rgba(255,202,40,.13); border-color:rgba(255,202,40,.28);
+  box-shadow: 0 0 20px rgba(255,202,40,.08), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.tab-btn:active{ transform: scale(.97); }
+
+/* ========================================================= LAYOUT MOBILE ========================================================= */
+.main{ flex:1; min-height:0; display:flex; flex-direction:column; gap:5px; overflow:hidden; }
+.tab-content{ display:none; flex:1; min-height:0; flex-direction:column; gap:5px; overflow:hidden; }
+.tab-content.active{ display:flex; }
+
+/* Mode plein écran (éditeur caché) */
+.mobile-mode-preview .editor-section{ display:none; }
+.mobile-mode-preview .mobile-toggle-editor{ display:flex; }
+
+/* Section éditeur (repliable) */
+.editor-section{
+  display:flex; flex-direction:column; min-height:0;
+  border-radius:14px; overflow:hidden;
+  background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(255,202,40,.15);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 4px 20px rgba(0,0,0,.3);
+  transition: flex-basis .3s ease, height .3s ease;
+  flex: 0 1 45%;
+}
+.editor-section.hidden{ display:none; }
+
+/* Sub-tabs GROS et tactiles */
+.sub-tabs{
+  display:flex; gap:4px; padding:6px 8px 4px 8px;
+  flex:0 0 auto; align-items:center;
+  background:rgba(0,0,0,.15);
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.sub-tab{
+  height:34px; padding:0 14px; border-radius:9px;
+  background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.06);
+  color:#64748b; font-size:8px; font-weight:800;
+  letter-spacing:.06em; text-transform:uppercase;
+  transition:.18s ease; min-width:52px;
+}
+.sub-tab.active{
+  color:#fcd34d; background:rgba(255,202,40,.13);
+  border-color:rgba(255,202,40,.28);
+  box-shadow: 0 0 12px rgba(255,202,40,.1);
+}
+.sub-tab:active{ transform:scale(.95); }
+.sub-tabs-spacer{ flex:1; }
+
+/* En-tête éditeur */
+.editor-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:6px; padding:6px 8px 0 8px; margin-bottom:4px; flex:0 0 auto;
+}
+.editor-head-left{ display:flex; align-items:center; gap:8px; min-width:0; flex:1; }
+.section-title{ font-size:7px; line-height:9px; text-transform:uppercase; letter-spacing:.15em; color:#64748b; font-weight:800; }
+.editor-meta{
+  display:flex; align-items:center; gap:5px;
+  font-size:6.5px; color:#475569; font-weight:700;
+  font-variant-numeric:tabular-nums; letter-spacing:.04em;
+  white-space:nowrap;
+}
+.editor-meta .dot-live{ width:5px; height:5px; border-radius:50%; background:#475569; transition:.3s ease; }
+.editor-meta.has-content .dot-live{ background:#22c55e; box-shadow: 0 0 4px #22c55e; }
+.editor-meta.has-content{ color:#86efac; }
+
+/* BOUTONS éditeur 40px */
+.editor-actions{ display:flex; gap:6px; flex:0 0 auto; }
+.icon-btn{
+  width:40px; height:40px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.06);
+  color:#94a3b8; font-size:15px;
+  transition:.15s ease;
+}
+.icon-btn:active{ transform:scale(.9); background:rgba(255,255,255,.08); }
+.icon-btn.active{
+  color:#fcd34d; background:rgba(255,202,40,.13);
+  border-color:rgba(255,202,40,.28);
+}
+.icon-btn.danger{ color:#f87171; }
+.icon-btn.danger:active{ background:rgba(239,68,68,.15); }
+
+/* Editor wrap */
+.editor-wrap{ position:relative; flex:1; min-height:0; display:flex; overflow:hidden; margin:0 8px 8px 8px; border-radius:10px; }
+.editor-lines{
+  flex:0 0 28px; padding:10px 5px 30px 0;
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.075);
+  border-right:none; border-radius:10px 0 0 10px;
+  font-family:"Courier New",monospace; font-size:12px; line-height:1.55;
+  color:#475569; text-align:right; user-select:none; overflow:hidden;
+  font-variant-numeric:tabular-nums;
+}
+.editor-textarea-wrap{ position:relative; flex:1; min-width:0; display:flex; }
+.editor-wrap textarea{
+  width:100%; height:100%; min-height:120px;
+  resize:none; padding:10px 10px 30px 10px; border-radius:0 10px 10px 0;
+  background:rgba(0,0,0,.36); border:1px solid rgba(255,255,255,.075); border-left:none;
+  color:#cbd5e1; outline:none; font-family:"Courier New",monospace;
+  font-size:12px; line-height:1.55; tab-size:4;
+  -webkit-user-select:text; user-select:text;
+  transition:.2s ease;
+}
+.editor-wrap textarea:focus{
+  border-color:rgba(255,202,40,.6);
+  box-shadow: 0 0 0 2px rgba(255,202,40,.1), inset 0 0 25px rgba(255,202,40,.05);
+  background:rgba(0,0,0,.42);
+}
+
+.syntax-overlay{
+  position:absolute; inset:0;
+  padding:10px 10px 30px 10px; border-radius:0 10px 10px 0;
+  font-family:"Courier New",monospace; font-size:12px; line-height:1.55;
+  color:transparent; pointer-events:none; z-index:1;
+  white-space:pre-wrap; word-break:break-word; overflow:hidden;
+}
+.syntax-overlay.hidden{ display:none; }
+.syntax-overlay .tok-tag{ color:#f87171; }
+.syntax-overlay .tok-attr{ color:#facc15; }
+.syntax-overlay .tok-str{ color:#7ee787; }
+.syntax-overlay .tok-cmt{ color:#64748b; font-style:italic; }
+textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
+
+/* BOUTON COLLER 40px */
+.paste-html{
+  position:absolute; right:8px; bottom:8px;
+  height:36px; padding:0 12px; border-radius:9px;
+  background:rgba(255,202,40,.15); border:1px solid rgba(255,202,40,.3);
+  color:#fcd34d; font-size:8px; font-weight:800; white-space:nowrap;
+  display:flex; align-items:center; gap:5px;
+  transition:.15s ease; z-index:3;
+}
+.paste-html:active{ transform:scale(.94); background:rgba(255,202,40,.25); }
+
+/* ========================================================= BOUTON EXÉCUTER XXL ========================================================= */
+.run-bar{ flex:0 0 auto; }
+.btn-run{
+  width:100%; height:52px; border-radius:14px;
+  color:white; font-weight:800; font-size:11px; letter-spacing:.08em;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border:1px solid rgba(252,211,77,.35);
+  box-shadow: 0 10px 28px rgba(245,158,11,.3), inset 0 1px 0 rgba(255,255,255,.15);
+  transition:.15s ease;
+  position:relative; overflow:hidden;
+}
+.btn-run:active{ transform:scale(.97); box-shadow: 0 6px 18px rgba(245,158,11,.3); }
+.btn-run.flash{ animation: btnFlash .4s ease; }
+@keyframes btnFlash{
+  0%,100%{ transform: scale(1); }
+  30%{ transform: scale(1.03); box-shadow: 0 0 30px rgba(252,211,77,.5); }
+}
+.btn-run .kbd{ opacity:.6; font-size:8px; }
+
+/* ========================================================= PREVIEW PLEIN ESPACE ========================================================= */
+.preview-section{
+  flex:1; min-height:0; display:flex; flex-direction:column;
+  border-radius:14px; padding:6px; position:relative;
+}
+.preview-container{
+  position:relative; width:100%; flex:1; min-height:0;
+  border-radius:11px; overflow:hidden; background:#fff;
+  border:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:flex-start; justify-content:center;
+  transition: width .3s ease;
+}
+.preview-container iframe{ width:100%; height:100%; border:none; background:#fff; display:block; max-width:100%; max-height:100%; }
+.preview-container.device-mode{ padding:6px; background:#1a1a20; align-items:center; }
+.preview-container.device-mode iframe{
+  border-radius:14px; box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  border:1px solid rgba(255,255,255,.08);
+  transition: width .3s ease, height .3s ease;
+}
+
+/* TOOLBAR FLOTTANTE EN BAS À DROITE (au pouce) */
+.preview-toolbar{
+  position:absolute; bottom:calc(10px + env(safe-area-inset-bottom)); right:10px;
+  display:flex; flex-direction:column; gap:6px;
+  z-index:10;
+}
+.pv-btn{
+  width:44px; height:44px; border-radius:13px;
+  background:rgba(15,18,25,.9); backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);
+  color:#e2e8f0; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  transition:.15s ease;
+}
+.pv-btn:active{ transform:scale(.9); background:rgba(255,202,40,.2); color:#fcd34d; }
+.pv-btn.accent{ color:#fcd34d; border-color:rgba(255,202,40,.35); }
+.pv-btn.exit{ background:rgba(239,68,68,.9); color:#fff; border-color:rgba(255,255,255,.3); }
+
+/* DEVICE BADGE en haut à gauche */
+.dim-badge{
+  position:absolute; top:10px; left:10px; z-index:10;
+  height:32px; padding:0 10px; border-radius:10px;
+  background:rgba(15,18,25,.9); backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);
+  color:#94a3b8; font-size:8px; font-weight:800; letter-spacing:.05em;
+  display:flex; align-items:center; gap:6px;
+  font-variant-numeric:tabular-nums;
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+.dim-badge .device-icon{ font-size:12px; }
+.dim-badge:active{ transform:scale(.95); }
+
+/* DEVICE MENU en bottom sheet */
+.device-menu{
+  position:absolute; top:50px; left:10px; z-index:20;
+  background:rgba(15,18,25,.98); backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1); border-radius:14px;
+  padding:8px; min-width:200px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  display:none;
+}
+.device-menu.open{ display:block; animation: menuFade .18s ease; }
+@keyframes menuFade{ from{ opacity:0; transform: translateY(-8px); } to{ opacity:1; transform: translateY(0); } }
+.device-item{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px; border-radius:10px;
+  font-size:9px; font-weight:700; color:#cbd5e1;
+  transition:.15s ease; min-height:44px;
+}
+.device-item:active{ background:rgba(255,202,40,.15); }
+.device-item.active{ color:#fcd34d; background:rgba(255,202,40,.13); }
+.device-item .dv-dim{ margin-left:auto; font-size:7px; color:#64748b; font-variant-numeric:tabular-nums; }
+
+.preview-container.flash::before{
+  content:""; position:absolute; inset:0; z-index:15;
+  background:rgba(255,202,40,.3); pointer-events:none;
+  animation: flashAnim .3s ease-out forwards;
+}
+@keyframes flashAnim{ 0%{ opacity:1; } 100%{ opacity:0; } }
+
+.preview-container.pseudo-fs{
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  width:100vw; height:100vh; height:100dvh;
+  margin:0; border-radius:0; border:none; z-index:9999;
+  padding:0; background:#fff;
+}
+.preview-container.pseudo-fs iframe{ border-radius:0; box-shadow:none; border:none; width:100% !important; height:100% !important; }
+.preview-container.pseudo-fs .preview-toolbar{ bottom:calc(14px + env(safe-area-inset-bottom)); right:14px; }
+.preview-container.pseudo-fs .pv-btn{ width:50px; height:50px; font-size:18px; }
+.preview-container.pseudo-fs .dim-badge{ top:calc(14px + env(safe-area-inset-top)); left:14px; }
+
+.preview-info-bar{
+  position:absolute; bottom:0; left:0; right:0;
+  padding:8px 12px; font-size:8px; color:#94a3b8;
+  background:linear-gradient(180deg, transparent, rgba(0,0,0,.8));
+  display:none; align-items:center; justify-content:center; gap:6px;
+  font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  pointer-events:none;
+}
+.preview-container.pseudo-fs .preview-info-bar,
+.preview-container:fullscreen .preview-info-bar{ display:flex; }
+
+/* ========================================================= BOTTOM SHEET (mobile) ========================================================= */
+.sheet-overlay{
+  position:fixed; inset:0; z-index:10000;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  opacity:0; pointer-events:none; transition:.25s ease;
+}
+.sheet-overlay.open{ opacity:1; pointer-events:auto; }
+
+.sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:10001;
+  max-height:82dvh; min-height:40dvh;
+  background: linear-gradient(180deg, rgba(15,18,25,.98), rgba(10,12,18,.99));
+  border-top:1px solid rgba(255,255,255,.1);
+  border-radius:22px 22px 0 0;
+  box-shadow: 0 -20px 60px rgba(0,0,0,.7);
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.sheet.open{ transform: translateY(0); }
+
+.sheet-handle{
+  width:44px; height:4px; border-radius:2px;
+  background:rgba(255,255,255,.2);
+  margin:10px auto 6px auto; flex:0 0 auto;
+}
+.sheet-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:4px 18px 12px 18px;
+  flex:0 0 auto;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.sheet-head-left{ display:flex; align-items:center; gap:12px; }
+.sheet-icon{
+  width:42px; height:42px; border-radius:13px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,202,40,.1); border:1px solid rgba(255,202,40,.15);
+  font-size:18px;
+}
+.sheet-title{ font-size:13px; font-weight:800; color:#fde68a; }
+.sheet-sub{ font-size:7px; text-transform:uppercase; letter-spacing:.16em; color:#a16207; font-weight:700; margin-bottom:2px; }
+.sheet-close{
+  width:44px; height:44px; border-radius:12px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  color:#94a3b8; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+  transition:.15s ease;
+}
+.sheet-close:active{ background:rgba(255,255,255,.1); color:#f8fafc; }
+
+.sheet-body{
+  flex:1; min-height:0; overflow-y:auto;
+  padding:14px 18px 18px 18px;
+  -webkit-overflow-scrolling: touch;
+}
+.sheet-body::-webkit-scrollbar{ width:4px; }
+.sheet-body::-webkit-scrollbar-thumb{ background:rgba(255,202,40,.3); border-radius:2px; }
+
+/* Grid pour les presets/snippets (2 cols sur mobile = OK) */
+.preset-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.preset-btn{
+  min-height:56px; border-radius:13px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  color:#cbd5e1; font-size:9px; font-weight:800;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  transition:.15s ease; padding:8px;
+}
+.preset-btn:active{ transform:scale(.95); background:rgba(255,202,40,.1); }
+.preset-btn.loaded{ color:#86efac; border-color:rgba(34,197,94,.3); background:rgba(34,197,94,.06); }
+.preset-btn .preset-icon{ font-size:20px; }
+
+/* History list */
+.history-list{ display:flex; flex-direction:column; gap:8px; }
+.history-item{
+  padding:14px 16px; border-radius:13px;
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+  transition:.15s ease; min-height:56px;
+}
+.history-item:active{ background:rgba(255,202,40,.1); }
+.history-item.active{ border-color:rgba(255,202,40,.4); background:rgba(255,202,40,.08); }
+.history-item-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.history-item-title{ font-size:10px; font-weight:800; color:#e2e8f0; }
+.history-item-time{ font-size:8px; color:#64748b; font-variant-numeric:tabular-nums; }
+.history-item-preview{ font-size:8px; color:#94a3b8; font-family:"Courier New",monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Info list */
+.info-list{ display:flex; flex-direction:column; gap:10px; }
+.info-item{
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px 14px; border-radius:13px;
+  background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.05);
+}
+.info-item-icon{
+  flex:0 0 36px; width:36px; height:36px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,202,40,.08); border:1px solid rgba(255,202,40,.12);
+  font-size:16px;
+}
+.info-item-body{ min-width:0; flex:1; }
+.info-item-title{ font-size:10px; font-weight:800; color:#e2e8f0; margin-bottom:3px; }
+.info-item-desc{ font-size:8.5px; color:#94a3b8; line-height:1.55; }
+.info-footer{
+  margin-top:16px; text-align:center;
+  font-size:7px; color:#475569; letter-spacing:.14em; text-transform:uppercase;
+}
+
+/* ========================================================= CONSOLE FLOTTANTE ========================================================= */
+.console-fab{
+  position:fixed;
+  bottom:calc(84px + env(safe-area-inset-bottom));
+  left:12px; z-index:8;
+  width:48px; height:48px; border-radius:14px;
+  background:rgba(15,18,25,.9); backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);
+  color:#cbd5e1; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  transition:.15s ease;
+}
+.console-fab:active{ transform:scale(.9); }
+.console-fab .console-dot{
+  position:absolute; top:-4px; right:-4px;
+  min-width:18px; height:18px; border-radius:9px;
+  background:#ef4444; color:#fff;
+  font-size:8px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+  padding:0 5px; box-shadow: 0 0 8px rgba(239,68,68,.6);
+}
+.console-fab .console-dot.hidden{ display:none; }
+.console-fab .console-dot.has-warn{ background:#facc15; box-shadow: 0 0 8px rgba(250,204,21,.6); }
+
+/* Console sheet plein écran */
+.console-sheet-body{
+  background:rgba(0,0,0,.4); border-radius:12px;
+  padding:12px; min-height:200px; max-height:60dvh; overflow-y:auto;
+  font-family:"Courier New",monospace; font-size:11px;
+  line-height:1.5; color:#94a3b8;
+  white-space:pre-wrap; word-break:break-word;
+  -webkit-overflow-scrolling: touch;
+}
+.log-line{ display:block; }
+.log-line .prefix{ color:#64748b; font-weight:700; }
+.log-line .info{ color:#cbd5e1; }
+.log-line .warn{ color:#facc15; font-weight:700; }
+.log-line .err{ color:#f87171; font-weight:700; }
+
+.console-filter-row{
+  display:flex; gap:6px; margin-bottom:10px;
+}
+.filter-btn{
+  flex:1; height:38px; border-radius:10px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  color:#94a3b8; font-size:8px; font-weight:800;
+  letter-spacing:.08em; text-transform:uppercase;
+  transition:.15s ease;
+}
+.filter-btn:active{ transform:scale(.95); }
+.filter-btn.active{ color:#fcd34d; background:rgba(255,202,40,.13); border-color:rgba(255,202,40,.3); }
+.filter-btn[data-filter="err"].active{ color:#fca5a5; background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.25); }
+.filter-btn[data-filter="warn"].active{ color:#fcd34d; background:rgba(250,204,21,.1); border-color:rgba(250,204,21,.25); }
+
+.console-perf-line{
+  display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;
+}
+.console-perf-chip{
+  height:32px; padding:0 12px; border-radius:9px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06);
+  color:#94a3b8; font-size:8px; font-weight:800;
+  display:flex; align-items:center; gap:6px;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ========================================================= EXTRACTOR ========================================================= */
+.extract-info{
+  font-size:8px; color:#64748b; font-weight:700;
+  min-height:1.4em; margin-top:8px; letter-spacing:.03em;
+}
+.extract-info.ok{ color:#86efac; }
+.extract-info.ko{ color:#fca5a5; }
+textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !important; cursor:default; }
+
+/* Boutons extractor 52px */
+.btn-extract{
+  width:100%; height:52px; border-radius:14px;
+  color:#a5b4fc; font-weight:800; font-size:10px; letter-spacing:.06em;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(99,102,241,.15);
+  transition:.15s ease;
+}
+.btn-extract:active{ transform:scale(.97); background:rgba(99,102,241,.1); border-color:rgba(99,102,241,.35); }
+
+/* ========================================================= TOAST ========================================================= */
+.toast-undo{
+  position:fixed; z-index:99999;
+  bottom:calc(90px + env(safe-area-inset-bottom));
+  left:50%; transform:translateX(-50%);
+  padding:12px 16px; border-radius:14px;
+  color:#f8fafc; background:rgba(15,23,42,.96);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 15px 40px rgba(0,0,0,.7);
+  font-size:10px; font-weight:700; backdrop-filter:blur(18px);
+  display:flex; align-items:center; gap:14px;
+  max-width:92vw; min-height:52px;
+  animation: toastIn .25s ease;
+}
+@keyframes toastIn{ from{ opacity:0; transform: translateX(-50%) translateY(20px); } to{ opacity:1; transform: translateX(-50%) translateY(0); } }
+.toast-undo button{
+  background:rgba(255,202,40,.15); border:1px solid rgba(255,202,40,.3);
+  color:#fcd34d; border-radius:9px; padding:8px 12px;
+  font-size:9px; font-weight:800; letter-spacing:.06em;
+}
+.toast-undo button:active{ background:rgba(255,202,40,.25); }
+
+/* ========================================================= INSTALL BAR ========================================================= */
+.install-bar{
+  position:fixed; bottom:calc(12px + env(safe-area-inset-bottom)); left:50%;
+  transform:translateX(-50%) translateY(120%);
+  z-index:99998; padding:12px 14px; border-radius:16px;
+  background:rgba(15,18,25,.96); backdrop-filter:blur(20px);
+  border:1px solid rgba(255,202,40,.25);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  display:flex; align-items:center; gap:12px; max-width:92vw;
+  transition: transform .35s ease;
+}
+.install-bar.show{ transform:translateX(-50%) translateY(0); }
+.install-bar-icon{ font-size:22px; }
+.install-bar-body{ min-width:0; flex:1; }
+.install-bar-title{ font-size:10px; font-weight:800; color:#fde68a; }
+.install-bar-desc{ font-size:8px; color:#94a3b8; margin-top:2px; }
+.install-bar-actions{ display:flex; gap:6px; }
+.install-yes, .install-no{
+  height:40px; padding:0 14px; border-radius:11px;
+  font-size:9px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  border:1px solid; transition:.15s ease;
+}
+.install-yes{ color:#fcd34d; background:rgba(255,202,40,.15); border-color:rgba(255,202,40,.3); }
+.install-yes:active{ background:rgba(255,202,40,.3); }
+.install-no{ color:#94a3b8; background:transparent; border-color:rgba(255,255,255,.08); }
+.install-no:active{ background:rgba(255,255,255,.06); }
+
+/* ========================================================= FOOTER ========================================================= */
+.footer{
+  height:14px; min-height:14px; display:flex; align-items:center; justify-content:center;
+  color:#334155; font-size:6px; letter-spacing:.14em; text-transform:uppercase;
+  margin-top:4px; flex:0 0 auto;
+}
+
+/* ========================================================= RESPONSIVE ========================================================= */
+@media (max-height:700px){
+  .header{ height:40px; min-height:40px; margin-bottom:4px; }
+  .brand-logo{ width:28px; height:28px; flex-basis:28px; }
+  .brand-name{ font-size:12px; }
+  .header-btn{ width:38px; height:38px; flex-basis:38px; font-size:13px; }
+  .tab-btn{ height:38px; font-size:7.5px; }
+  .btn-run{ height:48px; font-size:10px; }
+  .editor-section{ flex:0 1 38%; }
+  .sub-tab{ height:30px; font-size:7.5px; min-width:48px; }
+  .icon-btn{ width:36px; height:36px; font-size:13px; }
+  .footer{ display:none; }
+  .status-badge{ display:none; }
+}
+@media (min-width:600px){
+  /* Sur tablette/desktop, on agrandit */
+  .app-inner{ max-width:720px; }
+}
+</style>
+</head>
+<body>
+
+<div class="aurora"><div class="orb"></div></div>
+<div class="noise"></div>
+
+<div class="app">
+  <div class="app-inner">
+    <!-- HEADER compact -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo"><span>L</span></div>
+        <div class="min-w-0">
+          <div class="brand-name">Labcode</div>
+          <div class="brand-sub">Component Sandbox</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="statusBadge" class="status-badge">
+          <span class="dot"></span>
+          <span id="statusBadgeText">READY</span>
+        </div>
+        <button class="header-btn" onclick="openSheet('info')" aria-label="Info">ⓘ</button>
+      </div>
+    </header>
+
+    <!-- TABS gros -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" id="tabSandbox" role="tab" aria-selected="true" onclick="switchTab('editor-tab', this)">🧪 Sandbox</button>
+      <button class="tab-btn" id="tabExtractor" role="tab" aria-selected="false" onclick="switchTab('extractor-tab', this)">✂️ Extractor</button>
+    </div>
+
+    <!-- SANDBOX TAB -->
+    <div id="editor-tab" class="tab-content active">
+      <section class="editor-section" id="editorSection">
+        <div class="sub-tabs">
+          <button class="sub-tab active" data-file="html" onclick="switchSubTab('html')">HTML</button>
+          <button class="sub-tab" data-file="css" onclick="switchSubTab('css')">CSS</button>
+          <button class="sub-tab" data-file="js" onclick="switchSubTab('js')">JS</button>
+          <span class="sub-tabs-spacer"></span>
+          <button class="sub-tab" id="singleFileBtn" onclick="toggleSingleFile()" title="Single file">📄</button>
+        </div>
+
+        <div class="editor-head">
+          <div class="editor-head-left">
+            <span class="section-title" id="editorTitle">HTML</span>
+            <div id="editorMeta" class="editor-meta">
+              <span class="dot-live"></span>
+              <span id="lineCount">0</span> l · <span id="sizeInfo">0 Ko</span>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="icon-btn" onclick="openSheet('history')" title="Historique">↺</button>
+            <button class="icon-btn danger" onclick="clearEditor()" title="Vider">🗑</button>
+            <button class="icon-btn active" id="autoFsBtn" onclick="toggleAutoFs()" title="Plein écran auto">⛶</button>
+            <button class="icon-btn" onclick="hideEditor()" title="Masquer l'éditeur" id="hideEditorBtn">▼</button>
+          </div>
+        </div>
+
+        <div class="editor-wrap">
+          <div id="lineNumbers" class="editor-lines">1</div>
+          <div class="editor-textarea-wrap">
+            <div id="syntaxOverlay" class="syntax-overlay hidden"></div>
+            <textarea id="sandboxCode" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Colle ton code ici..." oninput="handleCodeInput()"></textarea>
+            <button class="paste-html" onclick="pasteInto('sandboxCode')">📋 COLLER</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bouton Exécuter XXL -->
+      <div class="run-bar">
+        <button class="btn-run" id="runBtn" onclick="runSandbox()">
+          <span>⚡</span>
+          <span>EXÉCUTER</span>
+        </button>
+      </div>
+
+      <!-- Preview pleine largeur -->
+      <section class="preview-section glass" id="previewSection">
+        <div class="preview-container" id="previewContainer">
+          <iframe id="labPreview" title="Aperçu"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads allow-pointer-lock allow-presentation"
+                  allow="camera; microphone; geolocation; clipboard-read; clipboard-write; fullscreen; autoplay; display-capture"></iframe>
+
+          <button class="dim-badge" id="deviceBadge" onclick="toggleDeviceMenu(event)">
+            <span class="device-icon" id="deviceIcon">🖥️</span>
+            <span id="deviceLabel">Auto</span>
+          </button>
+
+          <div class="device-menu" id="deviceMenu">
+            <div class="device-item" data-device="responsive" onclick="selectDevice('responsive')"><span>🖥️</span><span>Responsive</span></div>
+            <div class="device-item" data-device="se" onclick="selectDevice('se')"><span>📱</span><span>iPhone SE</span><span class="dv-dim">375</span></div>
+            <div class="device-item" data-device="iphone14" onclick="selectDevice('iphone14')"><span>📱</span><span>iPhone 14</span><span class="dv-dim">390</span></div>
+            <div class="device-item" data-device="ipad" onclick="selectDevice('ipad')"><span>📲</span><span>iPad</span><span class="dv-dim">768</span></div>
+            <div class="device-item" data-device="desktop" onclick="selectDevice('desktop')"><span>🖥️</span><span>Desktop</span><span class="dv-dim">1280</span></div>
+          </div>
+
+          <!-- Toolbar flottante en bas à droite -->
+          <div class="preview-toolbar">
+            <button class="pv-btn" onclick="reloadPreview()" title="Recharger">⟳</button>
+            <button class="pv-btn" id="fsBtn" onclick="toggleFullscreen()" title="Plein écran">⛶</button>
+          </div>
+
+          <div class="preview-info-bar">Plein écran · ✕ ou Échap pour sortir</div>
+        </div>
+      </section>
+
+      <!-- Bouton "Voir code" flottant si éditeur caché -->
+      <button class="console-fab" id="showEditorFab" style="display:none;" onclick="showEditor()" aria-label="Voir code">📝</button>
+
+      <!-- Bouton Console flottant -->
+      <button class="console-fab" id="consoleFab" onclick="openSheet('console')" aria-label="Console">
+        🖥
+        <span class="console-dot hidden" id="consoleDot">0</span>
+      </button>
+    </div>
+
+    <!-- EXTRACTOR TAB -->
+    <div id="extractor-tab" class="tab-content">
+      <section class="editor-section" style="flex:1;">
+        <div class="editor-head">
+          <div class="editor-head-left">
+            <span class="section-title">Source brute</span>
+            <div class="editor-meta" id="rawMeta">
+              <span class="dot-live"></span>
+              <span id="rawLineCount">0</span> l · <span id="rawSizeInfo">0 Ko</span>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="icon-btn danger" onclick="clearRaw()" title="Vider">🗑</button>
+          </div>
+        </div>
+        <div class="editor-wrap">
+          <div class="editor-textarea-wrap" style="flex:1; display:flex;">
+            <textarea id="rawSource" spellcheck="false" placeholder="Colle un code HTML complet ici..." oninput="updateRawMeta()" style="border-radius:10px;border-left:1px solid rgba(255,255,255,.075);"></textarea>
+            <button class="paste-html" onclick="pasteInto('rawSource')">📋 COLLER</button>
+          </div>
+        </div>
+      </section>
+
+      <button class="btn-extract" onclick="extractBlock('style')"><span>🎨</span><span>EXTRAIRE CSS</span></button>
+      <button class="btn-extract" onclick="extractBlock('script')"><span>⚙️</span><span>EXTRAIRE JS</span></button>
+      <button class="btn-extract" onclick="extractBlock('body')"><span>📱</span><span>EXTRAIRE BODY</span></button>
+
+      <section class="editor-section" style="flex:1;">
+        <div class="editor-head">
+          <div class="editor-head-left">
+            <span class="section-title">Résultat</span>
+            <div class="editor-meta" id="resultMeta">
+              <span class="dot-live"></span>
+              <span id="resultLineCount">0</span> l · <span id="resultSizeInfo">0 Ko</span>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="icon-btn" onclick="copyExtraction()" title="Copier">📋</button>
+          </div>
+        </div>
+        <div class="editor-wrap">
+          <div class="editor-textarea-wrap" style="flex:1; display:flex;">
+            <textarea id="extractionResult" readonly spellcheck="false" placeholder="Résultat ici..." style="border-radius:10px;border-left:1px solid rgba(255,255,255,.075);"></textarea>
+          </div>
+        </div>
+        <div id="extractInfo" class="extract-info"></div>
+      </section>
+
+      <button class="btn-run" onclick="sendExtractionToLab()">
+        <span>🧪</span>
+        <span>ENVOYER VERS LE LAB</span>
+      </button>
+    </div>
+
+    <!-- BARRE OUTILS BAS (6 boutons) -->
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; flex:0 0 auto; margin-top:4px;">
+      <button class="header-btn" onclick="openSheet('presets')" title="CDN" style="width:100%;">📚</button>
+      <button class="header-btn" onclick="openSheet('snippets')" title="Snippets" style="width:100%;">⚡</button>
+      <button class="header-btn" onclick="openSheet('files')" title="Fichiers" style="width:100%;">📁</button>
+      <button class="header-btn" onclick="shareCode()" title="Partager" style="width:100%;">↗</button>
+    </div>
+
+    <footer class="footer">Labcode · Laiche Brahim · Paris · 2026</footer>
+  </div>
+</div>
+
+<!-- ========================================================= BOTTOM SHEETS ========================================================= -->
+
+<!-- Sheet INFO -->
+<div class="sheet-overlay" id="infoOverlay" onclick="closeSheet('info')"></div>
+<div class="sheet" id="infoSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">ⓘ</div>
+      <div>
+        <div class="sheet-sub">Guide</div>
+        <div class="sheet-title">À propos de Labcode</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('info')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="info-list">
+      <div class="info-item">
+        <div class="info-item-icon">🧪</div>
+        <div class="info-item-body">
+          <div class="info-item-title">Multi-fichiers</div>
+          <div class="info-item-desc">HTML / CSS / JS séparés, assemblés au run. Mode <b>📄</b> pour tout dans un seul bloc.</div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">📱</div>
+        <div class="info-item-body">
+          <div class="info-item-title">Simulateur de device</div>
+          <div class="info-item-desc">Badge en haut à gauche de la preview : iPhone SE/14, iPad ou Desktop.</div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">▼</div>
+        <div class="info-item-body">
+          <div class="info-item-title">Masquer l'éditeur</div>
+          <div class="info-item-desc">Bouton <b>▼</b> dans l'éditeur → passe en mode preview plein écran. Bouton <b>📝</b> pour le rouvrir.</div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">⚠️</div>
+        <div class="info-item-body">
+          <div class="info-item-title">Important</div>
+          <div class="info-item-desc">Ne colle <b>pas</b> le code de Labcode lui-même (boucle infinie).</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-footer">Made by Brahim Laiche · 2026 · Paris</div>
+  </div>
+</div>
+
+<!-- Sheet CDN PRESETS -->
+<div class="sheet-overlay" id="presetsOverlay" onclick="closeSheet('presets')"></div>
+<div class="sheet" id="presetsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">📚</div>
+      <div>
+        <div class="sheet-sub">CDN</div>
+        <div class="sheet-title">Bibliothèques</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('presets')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <p style="font-size:9px;color:#94a3b8;margin:0 0 12px 0;line-height:1.5;">Touche pour injecter. Touche à nouveau pour retirer.</p>
+    <div class="preset-grid" id="presetGrid"></div>
+  </div>
+</div>
+
+<!-- Sheet SNIPPETS -->
+<div class="sheet-overlay" id="snippetsOverlay" onclick="closeSheet('snippets')"></div>
+<div class="sheet" id="snippetsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">⚡</div>
+      <div>
+        <div class="sheet-sub">Templates</div>
+        <div class="sheet-title">Snippets rapides</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('snippets')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="preset-grid" id="snippetsGrid"></div>
+  </div>
+</div>
+
+<!-- Sheet FILES (Export/Import) -->
+<div class="sheet-overlay" id="filesOverlay" onclick="closeSheet('files')"></div>
+<div class="sheet" id="filesSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">📁</div>
+      <div>
+        <div class="sheet-sub">Fichiers</div>
+        <div class="sheet-title">Export / Import</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('files')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="preset-grid">
+      <button class="preset-btn" onclick="exportCode()"><span class="preset-icon">⬇</span><span>Exporter .html</span></button>
+      <button class="preset-btn" onclick="importCode()"><span class="preset-icon">⬆</span><span>Importer .html</span></button>
+      <button class="preset-btn" onclick="shareCode()"><span class="preset-icon">↗</span><span>Partager</span></button>
+      <button class="preset-btn" onclick="openSheet('history'); closeSheet('files');"><span class="preset-icon">↺</span><span>Historique</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet HISTORY -->
+<div class="sheet-overlay" id="historyOverlay" onclick="closeSheet('history')"></div>
+<div class="sheet" id="historySheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">↺</div>
+      <div>
+        <div class="sheet-sub">Undo</div>
+        <div class="sheet-title">Historique</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('history')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<!-- Sheet CONSOLE -->
+<div class="sheet-overlay" id="consoleOverlay" onclick="closeSheet('console')"></div>
+<div class="sheet" id="consoleSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">🖥</div>
+      <div>
+        <div class="sheet-sub">Output</div>
+        <div class="sheet-title">Console</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('console')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="console-filter-row">
+      <button class="filter-btn active" data-filter="all" onclick="setConsoleFilter('all',event)">TOUT</button>
+      <button class="filter-btn" data-filter="info" onclick="setConsoleFilter('info',event)">LOG</button>
+      <button class="filter-btn" data-filter="warn" onclick="setConsoleFilter('warn',event)">WARN</button>
+      <button class="filter-btn" data-filter="err" onclick="setConsoleFilter('err',event)">ERR</button>
+    </div>
+    <div id="consoleLog" class="console-sheet-body"></div>
+    <div class="console-perf-line">
+      <div class="console-perf-chip" id="consolePerfChip">⚡ --</div>
+      <div class="console-perf-chip" id="consoleCountChip">0 erreur</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">
+      <button class="btn-extract" style="height:48px; color:#fca5a5; border-color:rgba(239,68,68,.2);" onclick="clearConsole()">🗑 VIDER</button>
+      <button class="btn-extract" style="height:48px;" onclick="copyConsole()">📋 COPIER</button>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL -->
+<div class="install-bar" id="installBar">
+  <div class="install-bar-icon">📲</div>
+  <div class="install-bar-body">
+    <div class="install-bar-title">Installer Labcode</div>
+    <div class="install-bar-desc">Accès hors-ligne et lancement rapide</div>
+  </div>
+  <div class="install-bar-actions">
+    <button class="install-no" onclick="dismissInstall()">Plus tard</button>
+    <button class="install-yes" onclick="installPwa()">Installer</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".html,.htm,.txt" style="display:none">
+
+<script>
+/* ========================================================= CONSTANTES ========================================================= */
+const LT = '<';
+const TAG_S = LT + 'script' + '>';
+const TAG_E = LT + '/' + 'script' + '>';
+const STYLE_O = LT + 'style' + '>';
+const STYLE_C = LT + '/' + 'style' + '>';
+const HEAD_O = LT + 'head' + '>';
+const HEAD_C = LT + '/' + 'head' + '>';
+const BODY_O = LT + 'body' + '>';
+const BODY_C = LT + '/' + 'body' + '>';
+const DOCTYPE = LT + '!DOCTYPE html>';
+
+const CACHE_KEY = 'labcode_cache_v4';
+const AUTO_FS_KEY = 'labcode_auto_fullscreen';
+const SINGLE_FILE_KEY = 'labcode_single_file';
+const DEVICE_KEY = 'labcode_device';
+const MAX_LOG_LINES = 8;
+const MAX_HISTORY = 10;
+const UNDO_TIMEOUT = 5000;
+const MAX_CODE_SIZE = 2 * 1024 * 1024;
+
+const PRESETS = [
+  { id: 'tailwind', label: 'Tailwind', icon: '🎨', html: LT + 'script src="https://cdn.tailwindcss.com">' + TAG_E },
+  { id: 'alpine', label: 'Alpine.js', icon: '🏔️', html: LT + 'script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js">' + TAG_E },
+  { id: 'three', label: 'Three.js', icon: '🎲', html: LT + 'script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js">' + TAG_E },
+  { id: 'gsap', label: 'GSAP', icon: '✨', html: LT + 'script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js">' + TAG_E },
+  { id: 'chart', label: 'Chart.js', icon: '📊', html: LT + 'script src="https://cdn.jsdelivr.net/npm/chart.js">' + TAG_E },
+  { id: 'fontawesome', label: 'FontAwesome', icon: '⭐', html: LT + 'link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">' },
+  { id: 'anime', label: 'Anime.js', icon: '🌀', html: LT + 'script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js">' + TAG_E },
+  { id: 'luxon', label: 'Luxon', icon: '📅', html: LT + 'script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js">' + TAG_E }
+];
+
+const SNIPPETS = {
+  hello: {
+    label: 'Hello World', icon: '👋',
+    html: LT + 'div class="hello">\n  ' + LT + 'h1>Hello World' + LT + '/h1>\n  ' + LT + 'p>Edit me!' + LT + '/p>\n' + LT + '/div>',
+    css: 'body { font-family: system-ui; padding: 2rem; background: #111; color: #fff; }\n.hello { text-align: center; }\n.hello h1 { color: #fcd34d; }',
+    js: "console.log('Hello World');"
+  },
+  button: {
+    label: 'Bouton', icon: '🔘',
+    html: LT + 'button id="btn">Clique-moi' + LT + '/button>',
+    css: 'body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #111; margin: 0; }\n#btn { padding: 1rem 2rem; border-radius: 12px; border: none; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 1rem; font-weight: 800; cursor: pointer; transition: transform .2s; }\n#btn:hover { transform: scale(1.05); }',
+    js: "document.getElementById('btn').addEventListener('click', function(){ console.log('Clic!'); });"
+  },
+  form: {
+    label: 'Formulaire', icon: '📝',
+    html: LT + 'form id="f">\n  ' + LT + 'input type="email" placeholder="Email" required>\n  ' + LT + 'button>Envoyer' + LT + '/button>\n' + LT + '/form>',
+    css: 'body { font-family: system-ui; padding: 2rem; background: #111; color: #fff; }\nform { display: flex; flex-direction: column; gap: 1rem; max-width: 320px; }\ninput, button { padding: .8rem; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #fff; }\nbutton { background: #f59e0b; border: none; font-weight: 800; cursor: pointer; }',
+    js: "document.getElementById('f').addEventListener('submit', function(e){ e.preventDefault(); console.log('Envoyé'); });"
+  },
+  canvas: {
+    label: 'Canvas', icon: '🎨',
+    html: LT + 'canvas id="c">' + LT + '/canvas>',
+    css: 'body { margin: 0; background: #111; display: flex; align-items: center; justify-content: center; min-height: 100vh; }\ncanvas { border-radius: 12px; }',
+    js: "var c = document.getElementById('c'); c.width = 300; c.height = 300;\nvar ctx = c.getContext('2d');\nvar t = 0;\nfunction loop(){ ctx.fillStyle = '#111'; ctx.fillRect(0,0,300,300);\n  for(var i=0;i<50;i++){ var x = 150 + 100*Math.cos(t + i*0.3);\n    var y = 150 + 100*Math.sin(t + i*0.3);\n    ctx.fillStyle = 'hsl(' + (i*7) + ',80%,60%)';\n    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); }\n  t += 0.02; requestAnimationFrame(loop); }\nloop();"
+  },
+  todo: {
+    label: 'Todo', icon: '✅',
+    html: LT + 'div class="app">\n  ' + LT + 'h2>Ma Todo' + LT + '/h2>\n  ' + LT + 'input id="inp" placeholder="Ajouter...">\n  ' + LT + 'ul id="list">' + LT + '/ul>\n' + LT + '/div>',
+    css: 'body { font-family: system-ui; background: #111; color: #fff; padding: 2rem; }\n.app { max-width: 320px; margin: auto; }\nh2 { color: #fcd34d; }\ninput { width: 100%; padding: .8rem; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #fff; box-sizing: border-box; margin-bottom: 1rem; }\nli { padding: .6rem; background: #1a1a1a; margin: .4rem 0; border-radius: 6px; list-style: none; }\nul { padding: 0; }',
+    js: "var inp = document.getElementById('inp'); var list = document.getElementById('list');\ninp.addEventListener('keydown', function(e){ if(e.key === 'Enter' && inp.value.trim()){ var li = document.createElement('li'); li.textContent = inp.value; li.onclick = function(){ li.remove(); }; list.appendChild(li); inp.value = ''; } });"
+  },
+  card: {
+    label: 'Carte UI', icon: '🃏',
+    html: LT + 'div class="card">\n  ' + LT + 'div class="avatar">🦊' + LT + '/div>\n  ' + LT + 'h3>Renard' + LT + '/h3>\n  ' + LT + 'p>Un animal curieux' + LT + '/p>\n' + LT + '/div>',
+    css: 'body { background: #111; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: system-ui; color: #fff; }\n.card { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); padding: 2rem; border-radius: 20px; text-align: center; border: 1px solid #333; max-width: 240px; }\n.avatar { font-size: 4rem; }\n.card h3 { color: #fcd34d; margin: .5rem 0; }\n.card p { color: #94a3b8; font-size: .9rem; margin: 0; }'
+  }
+};
+
+const DEVICES = {
+  responsive: { icon: '🖥️', label: 'Auto', w: null, h: null },
+  se:         { icon: '📱', label: 'SE', w: 375, h: 667 },
+  iphone14:   { icon: '📱', label: 'iPhone 14', w: 390, h: 844 },
+  ipad:       { icon: '📲', label: 'iPad', w: 768, h: 1024 },
+  desktop:    { icon: '🖥️', label: 'Desktop', w: 1280, h: 800 }
+};
+
+const byId = (id) => document.getElementById(id);
+
+/* ========================================================= STORAGE ========================================================= */
+const store = (() => {
+  const mem = {};
+  let ls = null;
+  try { ls = window.localStorage; ls.setItem('__lc_test', '1'); ls.removeItem('__lc_test'); }
+  catch (e) { ls = null; }
+  return {
+    getItem(k) { try { if (ls) return ls.getItem(k); } catch (e) {} return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+    setItem(k, v) { try { if (ls) { ls.setItem(k, v); return; } } catch (e) {} mem[k] = String(v); },
+    removeItem(k) { try { if (ls) ls.removeItem(k); } catch (e) {} delete mem[k]; }
+  };
+})();
+
+/* ========================================================= STATE ========================================================= */
+let currentBlobUrl = null;
+let autoFullscreen = store.getItem(AUTO_FS_KEY) !== '0';
+let singleFile = store.getItem(SINGLE_FILE_KEY) === '1';
+let saveTimer = null;
+let errorCount = 0, warnCount = 0;
+let consoleFilter = 'all';
+let currentDevice = store.getItem(DEVICE_KEY) || 'responsive';
+let lastRunTime = 0;
+let lastRunSize = 0;
+let history = [];
+let historyIndex = -1;
+let deferredInstall = null;
+let editorHidden = false;
+
+const files = { html: '', css: '', js: '' };
+let activeFile = 'html';
+
+/* ========================================================= HAPTIC ========================================================= */
+function haptic(ms){ ms = ms || 8; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+
+/* ========================================================= TOM SOUND ========================================================= */
+let audioCtx = null;
+function playTom(freq, duration) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var sr = audioCtx.sampleRate, bs = Math.floor(sr * duration);
+    var buffer = audioCtx.createBuffer(1, bs, sr);
+    var data = buffer.getChannelData(0);
+    for (var i = 0; i < bs; i++) {
+      var t = i / sr;
+      var env = Math.exp(-t / (duration * 0.3));
+      data[i] = Math.sin(2 * Math.PI * freq * t) * env;
+    }
+    var src = audioCtx.createBufferSource(); src.buffer = buffer;
+    var gain = audioCtx.createGain(); gain.gain.value = 0.22;
+    src.connect(gain); gain.connect(audioCtx.destination); src.start();
+  } catch(e){}
+}
+document.addEventListener('click', function(e){
+  if (e.target.closest('button')) playTom(140, 0.3);
+});
+
+/* ========================================================= TOAST UNDO ========================================================= */
+var toastTimer = null, toastUndoCallback = null;
+function showUndoToast(message, onUndo) {
+  var old = byId('undoToast'); if (old) old.remove();
+  var el = document.createElement('div');
+  el.id = 'undoToast';
+  el.className = 'toast-undo';
+  el.innerHTML = '<span>' + message + '</span>';
+  var undoBtn = document.createElement('button');
+  undoBtn.textContent = 'ANNULER';
+  undoBtn.onclick = function(e){ e.stopPropagation(); if (toastUndoCallback) toastUndoCallback(); el.remove(); clearTimeout(toastTimer); };
+  el.appendChild(undoBtn);
+  document.body.appendChild(el);
+  toastUndoCallback = onUndo;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.style.opacity = '0'; el.style.transition = '.3s'; setTimeout(function(){ el.remove(); }, 300); }, UNDO_TIMEOUT);
+}
+
+/* ========================================================= BOTTOM SHEETS ========================================================= */
+function openSheet(name) {
+  var overlay = byId(name + 'Overlay');
+  var sheet = byId(name + 'Sheet');
+  if (!sheet) return;
+  if (name === 'presets') refreshPresets();
+  if (name === 'snippets') buildSnippets();
+  if (name === 'history') buildHistory();
+  if (name === 'console') { setTimeout(function(){ scrollConsoleToBottom(); }, 250); }
+  overlay.classList.add('open');
+  sheet.classList.add('open');
+  haptic(6);
+}
+function closeSheet(name) {
+  var overlay = byId(name + 'Overlay');
+  var sheet = byId(name + 'Sheet');
+  if (!sheet) return;
+  overlay.classList.remove('open');
+  sheet.classList.remove('open');
+}
+
+/* Swipe down pour fermer les sheets */
+['info','presets','snippets','files','history','console'].forEach(function(name){
+  var sheet = byId(name + 'Sheet');
+  if (!sheet) return;
+  var startY = 0, currentY = 0, dragging = false;
+  sheet.addEventListener('touchstart', function(e){
+    if (e.target.closest('.sheet-body')) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    sheet.style.transition = 'none';
+  }, { passive: true });
+  sheet.addEventListener('touchmove', function(e){
+    if (!dragging) return;
+    currentY = e.touches[0].clientY - startY;
+    if (currentY > 0) sheet.style.transform = 'translateY(' + currentY + 'px)';
+  }, { passive: true });
+  sheet.addEventListener('touchend', function(){
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    if (currentY > 100) closeSheet(name);
+    currentY = 0;
+  });
+});
+
+/* ========================================================= TABS ========================================================= */
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+  byId(tabId).classList.add('active');
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
+  haptic(6);
+}
+
+/* ========================================================= EDITOR HIDE/SHOW ========================================================= */
+function hideEditor() {
+  editorHidden = true;
+  byId('editorSection').classList.add('hidden');
+  byId('showEditorFab').style.display = 'flex';
+  haptic(10);
+}
+function showEditor() {
+  editorHidden = false;
+  byId('editorSection').classList.remove('hidden');
+  byId('showEditorFab').style.display = 'none';
+  haptic(10);
+}
+
+/* ========================================================= SUB-TABS ========================================================= */
+function switchSubTab(file) {
+  if (!singleFile) files[activeFile] = byId('sandboxCode').value;
+  activeFile = file;
+  document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.classList.toggle('active', b.dataset.file === file); });
+  byId('editorTitle').textContent = file.toUpperCase();
+  byId('sandboxCode').value = singleFile ? files.html : (files[file] || '');
+  byId('sandboxCode').placeholder = { html: 'Code HTML...', css: 'Code CSS...', js: 'Code JavaScript...' }[file];
+  updateLineNumbers();
+  updateEditorMeta();
+  updateSyntaxOverlay();
+  haptic(6);
+}
+
+function toggleSingleFile() {
+  singleFile = !singleFile;
+  store.setItem(SINGLE_FILE_KEY, singleFile ? '1' : '0');
+  byId('singleFileBtn').classList.toggle('active', singleFile);
+  if (singleFile) {
+    var html = files.html || '', css = files.css || '', js = files.js || '';
+    var combined = html;
+    if (css) combined = STYLE_O + '\n' + css + '\n' + STYLE_C + '\n' + combined;
+    if (js) combined += '\n' + TAG_S + '\n' + js + '\n' + TAG_E;
+    files.html = combined;
+    byId('sandboxCode').value = combined;
+    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = '0.4'; });
+    byId('editorTitle').textContent = 'SINGLE';
+  } else {
+    var source = byId('sandboxCode').value;
+    var styleRe = new RegExp(STYLE_O.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([\\s\\S]*?)' + STYLE_C.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    var scriptRe = new RegExp(TAG_S.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([\\s\\S]*?)' + TAG_E.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    var cssMatch = source.match(styleRe);
+    var jsMatch = source.match(scriptRe);
+    files.css = cssMatch ? cssMatch[1].trim() : (files.css || '');
+    files.js = jsMatch ? jsMatch[1].trim() : (files.js || '');
+    files.html = source.replace(new RegExp(STYLE_O.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + STYLE_C.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '').replace(new RegExp(TAG_S.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + TAG_E.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '').trim();
+    activeFile = 'html';
+    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = ''; b.classList.toggle('active', b.dataset.file === 'html'); });
+    byId('editorTitle').textContent = 'HTML';
+    byId('sandboxCode').value = files.html;
+  }
+  handleCodeInput();
+  saveAllFiles();
+}
+
+/* ========================================================= LINES + SYNTAX ========================================================= */
+function updateLineNumbers() {
+  var ta = byId('sandboxCode');
+  var lines = ta.value.split('\n').length;
+  var el = byId('lineNumbers');
+  var html = '';
+  for (var i = 1; i <= Math.max(lines, 1); i++) html += i + '\n';
+  el.textContent = html;
+  el.scrollTop = ta.scrollTop;
+}
+
+function updateSyntaxOverlay() {
+  var ta = byId('sandboxCode');
+  var overlay = byId('syntaxOverlay');
+  if (!singleFile || activeFile !== 'html') {
+    ta.classList.remove('has-syntax');
+    overlay.classList.add('hidden');
+    return;
+  }
+  ta.classList.add('has-syntax');
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = highlightHtml(ta.value) + '\n';
+  overlay.scrollTop = ta.scrollTop;
+  overlay.scrollLeft = ta.scrollLeft;
+}
+
+function highlightHtml(code) {
+  var s = escapeHtml(code);
+  s = s.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="tok-cmt">$1</span>');
+  s = s.replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9-]*)/g, '$1<span class="tok-tag">$2</span>');
+  s = s.replace(/(\s)([a-zA-Z-]+)(=)/g, '$1<span class="tok-attr">$2</span>$3');
+  s = s.replace(/(&quot;[^&]*?&quot;|'[^']*?')/g, '<span class="tok-str">$1</span>');
+  return s;
+}
+
+/* ========================================================= EDITOR META ========================================================= */
+function updateEditorMeta() {
+  var ta = byId('sandboxCode');
+  var text = ta.value;
+  var lines = text ? text.split('\n').length : 0;
+  var size = (new Blob([text]).size / 1024).toFixed(1);
+  byId('lineCount').textContent = lines;
+  byId('sizeInfo').textContent = size + ' Ko';
+  byId('editorMeta').classList.toggle('has-content', text.trim().length > 0);
+  updateLineNumbers();
+}
+
+function handleCodeInput() {
+  if (!singleFile) files[activeFile] = byId('sandboxCode').value;
+  else files.html = byId('sandboxCode').value;
+  updateEditorMeta();
+  updateSyntaxOverlay();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveAllFiles, 300);
+}
+
+function saveAllFiles() {
+  try { store.setItem(CACHE_KEY, JSON.stringify({ html: files.html, css: files.css, js: files.js })); } catch (e) {}
+}
+
+function loadFiles() {
+  try {
+    var raw = store.getItem(CACHE_KEY);
+    if (raw) {
+      var data = JSON.parse(raw);
+      files.html = data.html || '';
+      files.css = data.css || '';
+      files.js = data.js || '';
+    }
+  } catch (e) {
+    store.removeItem(CACHE_KEY);
+    files.html = ''; files.css = ''; files.js = '';
+  }
+  if (singleFile) {
+    byId('sandboxCode').value = files.html;
+    byId('singleFileBtn').classList.add('active');
+    byId('editorTitle').textContent = 'SINGLE';
+    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = '0.4'; });
+  } else {
+    byId('sandboxCode').value = files.html;
+  }
+}
+
+/* ========================================================= PASTE ========================================================= */
+async function pasteInto(id) {
+  try {
+    var text = await navigator.clipboard.readText();
+    if (text.length > MAX_CODE_SIZE) { consoleLogger('Code trop gros (max 2 Mo).', 'error'); return; }
+    byId(id).value = text;
+    if (id === 'sandboxCode') {
+      handleCodeInput();
+      consoleLogger('Code collé.');
+      var onclickMatches = text.match(/on(click|change|input|submit)\s*=\s*["']\s*([A-Za-z_$][\w$]*)/g);
+      if (onclickMatches) {
+        var fns = {};
+        onclickMatches.forEach(function(m){ var fn = m.match(/([A-Za-z_$][\w$]*)\s*$/); if (fn) fns[fn[1]] = true; });
+        var list = Object.keys(fns);
+        if (list.length) consoleLogger('⚠️ Appels externes (' + list.slice(0, 3).join(', ') + ') ignorés dans le sandbox.', 'warn');
+      }
+      if (text.indexOf('sandboxHook') !== -1 && text.indexOf('switchSubTab') !== -1) {
+        consoleLogger('⚠️ Tu as collé le code source de Labcode. Boucle infinie !', 'warn');
+      }
+    } else {
+      updateRawMeta();
+    }
+    haptic(8);
+  } catch (err) {
+    consoleLogger('Presse-papiers refusé.', 'error');
+  }
+}
+
+function clearEditor() {
+  var ta = byId('sandboxCode');
+  if (!ta.value) { haptic(20); return; }
+  var backup = { html: files.html, css: files.css, js: files.js };
+  ta.value = '';
+  if (singleFile) files.html = '';
+  else files[activeFile] = '';
+  handleCodeInput();
+  haptic(15);
+  showUndoToast('Éditeur vidé', function(){
+    files.html = backup.html; files.css = backup.css; files.js = backup.js;
+    ta.value = singleFile ? files.html : files[activeFile];
+    handleCodeInput();
+    haptic(10);
+  });
+}
+
+/* Tab → snippets ou espaces */
+byId('sandboxCode').addEventListener('keydown', function(e){
+  if (e.key !== 'Tab' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+  e.preventDefault();
+  var ta = e.target;
+  var before = ta.value.slice(0, ta.selectionStart);
+  var currentLine = before.split('\n').pop();
+  var wordMatch = currentLine.match(/(\w+)$/);
+  var word = wordMatch ? wordMatch[1] : '';
+  var snippetMap = {
+    html5: '<!DOCTYPE html>\n<html lang="fr">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width,initial-scale=1">\n  <title>Document</title>\n</head>\n<body>\n  \n</body>\n</html>',
+    div: '<div></div>', btn: '<button></button>', inp: '<input type="text">',
+    img: '<img src="" alt="">', a: '<a href=""></a>',
+    ul: '<ul>\n  <li></li>\n</ul>',
+    flex: 'display: flex;\nalign-items: center;\njustify-content: center;',
+    log: 'console.log();'
+  };
+  if (snippetMap[word]) {
+    ta.setRangeText(snippetMap[word], ta.selectionStart - word.length, ta.selectionEnd, 'end');
+  } else {
+    ta.setRangeText('    ', ta.selectionStart, ta.selectionEnd, 'end');
+  }
+  handleCodeInput();
+});
+
+byId('sandboxCode').addEventListener('scroll', function(){
+  byId('lineNumbers').scrollTop = byId('sandboxCode').scrollTop;
+  var overlay = byId('syntaxOverlay');
+  if (!overlay.classList.contains('hidden')) {
+    overlay.scrollTop = byId('sandboxCode').scrollTop;
+    overlay.scrollLeft = byId('sandboxCode').scrollLeft;
+  }
+});
+
+/* ========================================================= CONSOLE ========================================================= */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function updateConsoleCount(){
+  var dot = byId('consoleDot');
+  var total = errorCount + warnCount;
+  if (total === 0) {
+    dot.classList.add('hidden');
+  } else {
+    dot.classList.remove('hidden');
+    dot.textContent = total > 99 ? '99+' : String(total);
+    dot.classList.toggle('has-warn', errorCount === 0 && warnCount > 0);
+  }
+  var chip = byId('consoleCountChip');
+  chip.textContent = errorCount + ' err · ' + warnCount + ' warn';
+}
+
+function consoleLogger(msg, type) {
+  type = type || 'info';
+  var el = byId('consoleLog'); if (!el) return;
+  var styles = { info: { cls: 'info', prefix: '› ' }, warn: { cls: 'warn', prefix: '⚠ ' }, error: { cls: 'err', prefix: '✕ ' } };
+  var style = styles[type] || styles.info;
+  if (type === 'error') errorCount++;
+  else if (type === 'warn') warnCount++;
+  updateConsoleCount();
+
+  var line = document.createElement('span');
+  line.className = 'log-line';
+  line.dataset.type = type;
+  if (consoleFilter !== 'all' && consoleFilter !== type) line.classList.add('hidden-filter');
+  line.innerHTML = '<span class="prefix">' + style.prefix + '</span><span class="' + style.cls + '">' + escapeHtml(String(msg)) + '</span>';
+  el.appendChild(line);
+  el.appendChild(document.createTextNode('\n'));
+  while (el.childNodes.length > MAX_LOG_LINES * 2) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearConsole() {
+  var el = byId('consoleLog'); el.innerHTML = '';
+  errorCount = 0; warnCount = 0;
+  updateConsoleCount();
+  consoleLogger('Console vidée.');
+}
+
+function setConsoleFilter(f, ev){
+  if (ev) ev.stopPropagation();
+  consoleFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.filter === f); });
+  document.querySelectorAll('#consoleLog .log-line').forEach(function(line){ line.classList.toggle('hidden-filter', f !== 'all' && line.dataset.type !== f); });
+}
+
+function scrollConsoleToBottom(){
+  var el = byId('consoleLog');
+  if (el) el.scrollTop = el.scrollHeight;
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand('copy'); document.body.removeChild(ta);
+      return ok;
+    } catch (err) { return false; }
+  }
+}
+
+async function copyConsole() {
+  var el = byId('consoleLog');
+  var ok = await copyText(el.innerText || el.textContent);
+  consoleLogger(ok ? 'Contenu copié !' : 'Copie impossible', ok ? 'info' : 'error');
+}
+
+/* ========================================================= SANDBOX HOOK ========================================================= */
+function sandboxHook() {
+  var STUBS = ['switchTab','toggleFullscreen','runSandbox','openInfo','closeInfo',
+    'openPresets','closePresets','openSnippets','closeSnippets','openHistory','closeHistory',
+    'clearEditor','clearConsole','copyConsole','toggleConsole','setConsoleFilter',
+    'scrollConsoleToBottom','pasteInto','selectDevice','toggleDeviceMenu','reloadPreview',
+    'exportCode','importCode','shareCode','toggleSingleFile','switchSubTab','toggleAutoFs',
+    'clearRaw','extractBlock','copyExtraction','sendExtractionToLab','togglePreset',
+    'loadSnippet','restoreHistory','dismissInstall','installPwa','applyDevice',
+    'handleCodeInput','updateRawMeta','updateResultMeta','updateEditorMeta',
+    'openSheet','closeSheet','hideEditor','showEditor'];
+  for (var si = 0; si < STUBS.length; si++) {
+    if (typeof window[STUBS[si]] !== 'function') window[STUBS[si]] = function(){};
+  }
+  var send = function(type, data) { try { window.parent.postMessage({ source: 'labcode', type: type, data: data }, '*'); } catch (e) {} };
+  var fmt = function(v) {
+    if (typeof v === 'string') return v;
+    if (v instanceof Error) return v.stack || (v.name + ': ' + v.message);
+    try { return JSON.stringify(v, function(k, x) { return typeof x === 'function' ? '[Function]' : x; }); }
+    catch (e) { return String(v); }
+  };
+  var levels = { log: 'info', info: 'info', debug: 'info', warn: 'warn', error: 'error' };
+  Object.keys(levels).forEach(function(level) {
+    var original = console[level];
+    console[level] = function() {
+      var args = Array.prototype.slice.call(arguments);
+      send(levels[level], args.map(fmt).join(' '));
+      try { original.apply(console, args); } catch (e) {}
+    };
+  });
+  window.addEventListener('error', function(e) {
+    var t = e.target;
+    if (t && t !== window && (t.src || t.href)) send('warn', 'Ressource introuvable : ' + (t.src || t.href));
+    else send('error', (e.message || 'Erreur inconnue') + ' (Ligne ' + e.lineno + ')');
+  }, true);
+  window.addEventListener('unhandledrejection', function(e) { send('error', 'Promesse rejetée : ' + fmt(e.reason)); });
+}
+
+function injectHook(code) {
+  var hookBody = sandboxHook.toString()
+    .replace(/\s*\n\s*/g, ' ')
+    .replace(/<\/script/gi, '<\\/script')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+  var hook = TAG_S + '(' + hookBody + ')();' + TAG_E;
+  var headOpen = code.match(new RegExp(LT + 'head(\\s[^>]*)?>', 'i'));
+  if (headOpen) { var i1 = headOpen.index + headOpen[0].length; return code.slice(0, i1) + hook + code.slice(i1); }
+  var htmlOpen = code.match(new RegExp(LT + 'html(\\s[^>]*)?>', 'i'));
+  if (htmlOpen) { var i2 = htmlOpen.index + htmlOpen[0].length; return code.slice(0, i2) + HEAD_O + hook + HEAD_C + code.slice(i2); }
+  var doctype = code.match(new RegExp('^\\s*' + LT + '!doctype[^>]*>', 'i'));
+  if (doctype) { var i3 = doctype.index + doctype[0].length; return code.slice(0, i3) + '\n' + hook + '\n' + code.slice(i3); }
+  return DOCTYPE + '\n' + hook + '\n' + code;
+}
+
+function buildFinalCode() {
+  if (singleFile) return injectHook(files.html || '');
+  var html = files.html || '', css = files.css || '', js = files.js || '';
+  var hasFullDoc = /<html[\s>]/i.test(html) || /<!doctype/i.test(html);
+  if (hasFullDoc) {
+    var out = html;
+    if (css) {
+      var styleBlock = STYLE_O + '\n' + css + '\n' + STYLE_C;
+      if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, styleBlock + '\n</head>');
+      else out = styleBlock + '\n' + out;
+    }
+    if (js) {
+      var jsBlock = TAG_S + '\n' + js + '\n' + TAG_E;
+      if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, jsBlock + '\n</body>');
+      else out += '\n' + jsBlock;
+    }
+    return injectHook(out);
+  }
+  var finalHtml = DOCTYPE + '\n' + HEAD_O + '\n' +
+    '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+    (css ? STYLE_O + '\n' + css + '\n' + STYLE_C + '\n' : '') +
+    HEAD_C + '\n' + BODY_O + '\n' + html + '\n' +
+    (js ? TAG_S + '\n' + js + '\n' + TAG_E + '\n' : '') +
+    BODY_C;
+  return injectHook(finalHtml);
+}
+
+/* ========================================================= RUN ========================================================= */
+function setStatusBadge(text, cls){
+  var el = byId('statusBadge');
+  var txt = byId('statusBadgeText');
+  el.classList.remove('ok','run','err');
+  if (cls) el.classList.add(cls);
+  txt.textContent = text;
+}
+
+function pushHistory() {
+  var entry = { html: files.html, css: files.css, js: files.js, single: singleFile, time: Date.now() };
+  if (history.length && history[history.length-1].html === entry.html && history[history.length-1].css === entry.css && history[history.length-1].js === entry.js) return;
+  history.push(entry);
+  if (history.length > MAX_HISTORY) history.shift();
+  historyIndex = history.length - 1;
+}
+
+function runSandbox() {
+  var finalCode;
+  try { finalCode = buildFinalCode(); }
+  catch (e) { consoleLogger('Erreur compilation : ' + e.message, 'error'); setStatusBadge('ERR', 'err'); return; }
+  if (!finalCode.trim() || finalCode.trim() === DOCTYPE) {
+    consoleLogger('Rien à exécuter.', 'warn');
+    setStatusBadge('EMPTY', 'err');
+    haptic(20); return;
+  }
+  var t0 = performance.now();
+  clearConsole();
+  haptic(15);
+  setStatusBadge('RUN', 'run');
+
+  var pc = byId('previewContainer');
+  pc.classList.remove('flash'); void pc.offsetWidth; pc.classList.add('flash');
+  var btn = byId('runBtn');
+  btn.classList.remove('flash'); void btn.offsetWidth; btn.classList.add('flash');
+
+  var blob = new Blob([finalCode], { type: 'text/html;charset=utf-8' });
+  var prevUrl = currentBlobUrl;
+  currentBlobUrl = URL.createObjectURL(blob);
+  byId('labPreview').src = currentBlobUrl;
+  if (prevUrl) URL.revokeObjectURL(prevUrl);
+
+  pushHistory();
+  lastRunTime = Math.round(performance.now() - t0);
+  lastRunSize = (new Blob([finalCode]).size / 1024).toFixed(1);
+  byId('consolePerfChip').textContent = '⚡ ' + lastRunTime + 'ms · ' + lastRunSize + ' Ko';
+
+  if (autoFullscreen && !isFullscreen()) enterFullscreen();
+  setTimeout(function(){ setStatusBadge(errorCount > 0 ? 'ERR' : 'DONE', errorCount > 0 ? 'err' : 'ok'); }, 500);
+}
+
+window.addEventListener('message', function(e){
+  var d = e.data;
+  if (!d || d.source !== 'labcode') return;
+  if (e.source !== byId('labPreview').contentWindow) return;
+  consoleLogger(String(d.data), d.type);
+});
+
+/* ========================================================= FULLSCREEN ========================================================= */
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || byId('previewContainer').classList.contains('pseudo-fs'));
+}
+function updateFsButton() {
+  var btn = byId('fsBtn');
+  if (!btn) return;
+  if (isFullscreen()) { btn.textContent = '✕'; btn.classList.add('exit'); }
+  else { btn.textContent = '⛶'; btn.classList.remove('exit'); }
+  byId('autoFsBtn').classList.toggle('active', autoFullscreen);
+}
+function enterFullscreen() {
+  var c = byId('previewContainer');
+  var req = c.requestFullscreen || c.webkitRequestFullscreen;
+  var usePseudo = function(){ c.classList.add('pseudo-fs'); document.body.style.overflow = 'hidden'; updateFsButton(); haptic(10); };
+  if (!req) return usePseudo();
+  try {
+    var r = req.call(c);
+    if (r && r.catch) r.catch(usePseudo); else if (!r) usePseudo();
+    setTimeout(updateFsButton, 100);
+  } catch(e){ usePseudo(); }
+}
+function exitFullscreen() {
+  var c = byId('previewContainer');
+  c.classList.remove('pseudo-fs');
+  document.body.style.overflow = '';
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    var ex = document.exitFullscreen || document.webkitExitFullscreen;
+    try { ex.call(document); } catch(e){}
+  }
+  updateFsButton(); haptic(8);
+}
+function toggleFullscreen() { isFullscreen() ? exitFullscreen() : enterFullscreen(); }
+function toggleAutoFs() { autoFullscreen = !autoFullscreen; store.setItem(AUTO_FS_KEY, autoFullscreen ? '1' : '0'); updateAutoFsButton(); haptic(10); }
+function updateAutoFsButton() {
+  var b = byId('autoFsBtn');
+  b.classList.toggle('active', autoFullscreen);
+  b.title = 'Plein écran auto : ' + (autoFullscreen ? 'OUI' : 'NON');
+}
+document.addEventListener('fullscreenchange', updateFsButton);
+document.addEventListener('webkitfullscreenchange', updateFsButton);
+
+function reloadPreview() {
+  var iframe = byId('labPreview');
+  if (iframe.src) {
+    var src = iframe.src;
+    iframe.src = '';
+    setTimeout(function(){ iframe.src = src; }, 30);
+    haptic(8);
+  }
+}
+
+/* ========================================================= DEVICE ========================================================= */
+function toggleDeviceMenu(e) {
+  if (e) e.stopPropagation();
+  byId('deviceMenu').classList.toggle('open');
+  haptic(6);
+}
+document.addEventListener('click', function(e){
+  if (!e.target.closest('#deviceBadge') && !e.target.closest('#deviceMenu')) {
+    byId('deviceMenu').classList.remove('open');
+  }
+});
+
+function selectDevice(device) {
+  currentDevice = device;
+  store.setItem(DEVICE_KEY, device);
+  applyDevice();
+  byId('deviceMenu').classList.remove('open');
+  haptic(8);
+}
+
+function applyDevice() {
+  var d = DEVICES[currentDevice] || DEVICES.responsive;
+  byId('deviceIcon').textContent = d.icon;
+  byId('deviceLabel').textContent = d.label;
+  var container = byId('previewContainer');
+  var iframe = byId('labPreview');
+  document.querySelectorAll('.device-item').forEach(function(item){ item.classList.toggle('active', item.dataset.device === currentDevice); });
+  if (d.w) {
+    container.classList.add('device-mode');
+    iframe.style.width = d.w + 'px';
+    iframe.style.height = d.h + 'px';
+    iframe.style.maxWidth = '100%';
+    iframe.style.maxHeight = '100%';
+  } else {
+    container.classList.remove('device-mode');
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.maxWidth = '';
+    iframe.style.maxHeight = '';
+  }
+}
+
+/* ========================================================= PRESETS ========================================================= */
+function refreshPresets() {
+  var grid = byId('presetGrid');
+  if (!grid.dataset.built) {
+    grid.innerHTML = '';
+    PRESETS.forEach(function(p){
+      var btn = document.createElement('button');
+      btn.className = 'preset-btn';
+      btn.dataset.id = p.id;
+      btn.innerHTML = '<span class="preset-icon">' + p.icon + '</span><span>' + p.label + '</span>';
+      btn.onclick = function(){ togglePreset(p.id, btn); };
+      grid.appendChild(btn);
+    });
+    grid.dataset.built = '1';
+  }
+  document.querySelectorAll('.preset-btn').forEach(function(btn){
+    var p = PRESETS.find(function(x){ return x.id === btn.dataset.id; });
+    if (!p) return;
+    btn.classList.toggle('loaded', files.html.indexOf(p.html) !== -1);
+  });
+}
+
+function togglePreset(id, btn) {
+  var p = PRESETS.find(function(x){ return x.id === id; });
+  if (!p) return;
+  if (btn.classList.contains('loaded')) {
+    files.html = files.html.replace(p.html, '').replace(/\n{3,}/g, '\n\n');
+    btn.classList.remove('loaded');
+    consoleLogger('CDN ' + p.label + ' retiré.');
+  } else {
+    files.html = p.html + '\n' + files.html;
+    btn.classList.add('loaded');
+    consoleLogger('CDN ' + p.label + ' injecté.');
+  }
+  if (!singleFile && activeFile !== 'html') switchSubTab('html');
+  else byId('sandboxCode').value = files.html;
+  handleCodeInput();
+  haptic(8);
+}
+
+/* ========================================================= SNIPPETS ========================================================= */
+function buildSnippets() {
+  var grid = byId('snippetsGrid');
+  grid.innerHTML = '';
+  Object.keys(SNIPPETS).forEach(function(key){
+    var s = SNIPPETS[key];
+    var btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.innerHTML = '<span class="preset-icon">' + s.icon + '</span><span>' + s.label + '</span>';
+    btn.onclick = function(){ loadSnippet(key); closeSheet('snippets'); };
+    grid.appendChild(btn);
+  });
+}
+
+function loadSnippet(key) {
+  var s = SNIPPETS[key];
+  if (!s) return;
+  var backup = { html: files.html, css: files.css, js: files.js };
+  files.html = s.html || '';
+  files.css = s.css || '';
+  files.js = s.js || '';
+  if (singleFile) {
+    var combined = files.html;
+    if (files.css) combined = STYLE_O + '\n' + files.css + '\n' + STYLE_C + '\n' + combined;
+    if (files.js) combined += '\n' + TAG_S + '\n' + files.js + '\n' + TAG_E;
+    files.html = combined;
+    byId('sandboxCode').value = combined;
+  } else {
+    byId('sandboxCode').value = files[activeFile];
+  }
+  handleCodeInput();
+  consoleLogger('Snippet "' + s.label + '" chargé.');
+  showUndoToast('Snippet chargé', function(){
+    files.html = backup.html; files.css = backup.css; files.js = backup.js;
+    byId('sandboxCode').value = singleFile ? files.html : files[activeFile];
+    handleCodeInput();
+  });
+  haptic(10);
+}
+
+/* ========================================================= HISTORY ========================================================= */
+function buildHistory() {
+  var list = byId('historyList');
+  list.innerHTML = '';
+  if (history.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#64748b;font-size:11px;padding:30px;">Aucun historique</div>';
+    return;
+  }
+  history.slice().reverse().forEach(function(h, i){
+    var idx = history.length - 1 - i;
+    var item = document.createElement('div');
+    item.className = 'history-item' + (idx === historyIndex ? ' active' : '');
+    var preview = (h.html || '').replace(/\s+/g, ' ').slice(0, 60);
+    var date = new Date(h.time);
+    var time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    item.innerHTML = '<div class="history-item-head"><span class="history-item-title">#' + (idx + 1) + (h.single ? ' · single' : '') + '</span><span class="history-item-time">' + time + '</span></div><div class="history-item-preview">' + escapeHtml(preview || '(vide)') + '</div>';
+    item.onclick = function(){ restoreHistory(idx); closeSheet('history'); };
+    list.appendChild(item);
+  });
+}
+
+function restoreHistory(idx) {
+  var h = history[idx];
+  if (!h) return;
+  files.html = h.html; files.css = h.css; files.js = h.js;
+  singleFile = !!h.single;
+  store.setItem(SINGLE_FILE_KEY, singleFile ? '1' : '0');
+  byId('singleFileBtn').classList.toggle('active', singleFile);
+  byId('sandboxCode').value = singleFile ? files.html : files[activeFile];
+  handleCodeInput();
+  historyIndex = idx;
+  consoleLogger('Historique restauré (#' + (idx + 1) + ').');
+  haptic(10);
+}
+
+/* ========================================================= EXPORT / IMPORT / SHARE ========================================================= */
+function exportCode() {
+  var code = buildFinalCode();
+  var blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'labcode-' + Date.now() + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  consoleLogger('Code exporté.');
+  haptic(10);
+}
+
+function importCode() {
+  var input = byId('fileInput');
+  input.value = '';
+  input.onchange = function(e){
+    var f = e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var text = ev.target.result;
+      files.html = text;
+      files.css = ''; files.js = '';
+      if (!singleFile && activeFile !== 'html') switchSubTab('html');
+      else byId('sandboxCode').value = text;
+      handleCodeInput();
+      consoleLogger('Fichier ' + f.name + ' importé.');
+      closeSheet('files');
+    };
+    reader.readAsText(f);
+  };
+  input.click();
+}
+
+async function shareCode() {
+  var code = buildFinalCode();
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Labcode snippet', text: code.slice(0, 200) + '...' }); } catch (e) {}
+  } else {
+    var ok = await copyText(code);
+    consoleLogger(ok ? 'Code copié dans le presse-papiers.' : 'Partage non supporté.', ok ? 'info' : 'warn');
+  }
+  haptic(10);
+}
+
+/* ========================================================= KEYBOARD (desktop) ========================================================= */
+document.addEventListener('keydown', function(e){
+  var mod = e.ctrlKey || e.metaKey;
+  if (e.key === 'Escape') {
+    if (byId('previewContainer').classList.contains('pseudo-fs')) exitFullscreen();
+    ['info','presets','snippets','files','history','console'].forEach(function(n){ closeSheet(n); });
+    byId('deviceMenu').classList.remove('open');
+  }
+  if (!mod) return;
+  if (e.key === 'Enter') { e.preventDefault(); runSandbox(); }
+  else if (e.key.toLowerCase() === 'k') { e.preventDefault(); clearEditor(); }
+  else if (e.key.toLowerCase() === 'f') { e.preventDefault(); toggleFullscreen(); }
+  else if (e.key === '1') { e.preventDefault(); switchTab('editor-tab', byId('tabSandbox')); }
+  else if (e.key === '2') { e.preventDefault(); switchTab('extractor-tab', byId('tabExtractor')); }
+  else if (e.key.toLowerCase() === 'z') { e.preventDefault(); openSheet('history'); }
+});
+
+/* ========================================================= EXTRACTOR ========================================================= */
+var EXTRACTORS = {
+  style:  { label: 'CSS', pattern: LT + 'style[^>]*>([\\s\\S]*?)' + LT + '/style>' },
+  script: { label: 'JS',  pattern: LT + 'script[^>]*>([\\s\\S]*?)' + LT + '/script>' },
+  body:   { label: 'corps', pattern: LT + 'body[^>]*>([\\s\\S]*?)(?:' + LT + '/body>|$)' }
+};
+
+function setExtractInfo(msg, ok) {
+  var el = byId('extractInfo');
+  el.textContent = msg;
+  el.className = 'extract-info' + (ok === true ? ' ok' : ok === false ? ' ko' : '');
+}
+
+function updateRawMeta() {
+  var t = byId('rawSource').value;
+  var lines = t ? t.split('\n').length : 0;
+  var size = (new Blob([t]).size / 1024).toFixed(1);
+  byId('rawLineCount').textContent = lines;
+  byId('rawSizeInfo').textContent = size + ' Ko';
+  byId('rawMeta').classList.toggle('has-content', t.trim().length > 0);
+}
+
+function clearRaw() {
+  var ta = byId('rawSource');
+  if (!ta.value) return;
+  var b = ta.value;
+  ta.value = ''; updateRawMeta();
+  haptic(15);
+  showUndoToast('Source vidée', function(){ ta.value = b; updateRawMeta(); });
+}
+
+function extractBlock(type) {
+  var source = byId('rawSource').value;
+  var resultArea = byId('extractionResult');
+  if (!source.trim()) { setExtractInfo("Colle d'abord du code.", false); haptic(20); return; }
+  var extractor = EXTRACTORS[type];
+  var regex = new RegExp(extractor.pattern, 'gi');
+  var matches = [];
+  var match;
+  while ((match = regex.exec(source)) !== null) {
+    var content = match[1].trim();
+    if (content) matches.push(content);
+    if (match[0].length === 0) regex.lastIndex++;
+  }
+  if (!matches.length) {
+    resultArea.value = '';
+    updateResultMeta();
+    setExtractInfo('Aucun bloc ' + LT + type + '> trouvé.', false);
+    return;
+  }
+  resultArea.value = matches.join('\n\n/* --- Nouveau Bloc --- */\n\n');
+  updateResultMeta();
+  var size = (new Blob([resultArea.value]).size / 1024).toFixed(1);
+  setExtractInfo(matches.length + ' bloc(s) · ' + size + ' Ko', true);
+  haptic(10);
+}
+
+function updateResultMeta() {
+  var t = byId('extractionResult').value;
+  var lines = t ? t.split('\n').length : 0;
+  var size = (new Blob([t]).size / 1024).toFixed(1);
+  byId('resultLineCount').textContent = lines;
+  byId('resultSizeInfo').textContent = size + ' Ko';
+  byId('resultMeta').classList.toggle('has-content', t.trim().length > 0);
+}
+
+async function copyExtraction() {
+  var v = byId('extractionResult').value;
+  if (!v) return setExtractInfo('Rien à copier.', false);
+  var ok = await copyText(v);
+  setExtractInfo(ok ? 'Copié !' : 'Copie impossible', ok);
+}
+
+function sendExtractionToLab() {
+  var v = byId('extractionResult').value;
+  if (!v) return setExtractInfo('Rien à envoyer.', false);
+  files.html = v;
+  if (singleFile) byId('sandboxCode').value = v;
+  else { if (activeFile !== 'html') switchSubTab('html'); else byId('sandboxCode').value = v; }
+  handleCodeInput();
+  switchTab('editor-tab', byId('tabSandbox'));
+  consoleLogger('Extraction envoyée dans le Lab.');
+  haptic(12);
+}
+
+/* ========================================================= PWA INSTALL ========================================================= */
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredInstall = e;
+  byId('installBar').classList.add('show');
+});
+
+function dismissInstall() { byId('installBar').classList.remove('show'); }
+async function installPwa() {
+  byId('installBar').classList.remove('show');
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  haptic(10);
+}
+
+/* ========================================================= INIT ========================================================= */
+(function init() {
+  try {
+    var oldRaw = store.getItem('labcode_cache_v3');
+    if (oldRaw && oldRaw.indexOf('sandboxHook') !== -1) store.removeItem('labcode_cache_v3');
+  } catch (e) {}
+  loadFiles();
+  updateEditorMeta();
+  updateRawMeta();
+  updateResultMeta();
+  updateAutoFsButton();
+  updateFsButton();
+  updateConsoleCount();
+  applyDevice();
+  if (files.html && files.html.indexOf('sandboxHook') !== -1) {
+    consoleLogger('⚠️ Cache contient du code Labcode. Vide l\'éditeur.', 'warn');
+  } else {
+    consoleLogger('Console prête.');
+  }
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); });
+  }
+})();
+</script>
+</body>
+</html>
