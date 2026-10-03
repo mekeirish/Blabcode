@@ -14,7 +14,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
-tailwind.config={ theme:{ extend:{ fontFamily:{ inter:["Inter","sans-serif"] } } } }
+window.tailwind = window.tailwind || {};
+window.tailwind.config = { theme: { extend: { fontFamily: { inter: ["Inter", "sans-serif"] } } } };
 </script>
 <style>
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -58,13 +59,13 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
   box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(255,202,40,.04), 0 18px 50px rgba(0,0,0,.28), 0 0 40px rgba(255,202,40,.06);
 }
 
-/* ========================================================= HEADER COMPACT ========================================================= */
+/* ========================================================= HEADER ========================================================= */
 .header{
   height:44px; min-height:44px;
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:5px; flex:0 0 auto;
 }
-.brand{ display:flex; align-items:center; gap:8px; min-width:0; }
+.brand{ display:flex; align-items:center; gap:8px; min-width:0; position:relative; }
 .brand-logo{
   width:32px; height:32px; flex:0 0 32px; border-radius:10px;
   display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;
@@ -97,17 +98,25 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .status-badge.err .dot{ background:#ef4444; box-shadow: 0 0 4px #ef4444, 0 0 8px rgba(239,68,68,.6); }
 .status-badge.err{ color:#fca5a5; border-color:rgba(239,68,68,.2); }
 @keyframes badgeBlink{ 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
-/* BOUTONS HEADER 44px (Apple HIG) */
 .header-btn{
   width:42px; height:42px; flex:0 0 42px; border-radius:12px;
   display:flex; align-items:center; justify-content:center;
   color:#fcd34d; font-size:15px;
-  transition:.2s ease; cursor:pointer;
+  transition:.2s ease;
   background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.06);
 }
 .header-btn:active{ transform:scale(.94); background:rgba(255,202,40,.13); }
 
-/* ========================================================= TABS (gros) ========================================================= */
+/* Save indicator */
+.save-indicator{
+  position:absolute; top:-2px; left:-2px;
+  width:8px; height:8px; border-radius:50%;
+  background:#22c55e; box-shadow: 0 0 6px #22c55e;
+  opacity:0; transition:.3s ease;
+}
+.save-indicator.show{ opacity:1; }
+
+/* ========================================================= TABS ========================================================= */
 .tabs{
   display:flex; gap:4px; padding:3px; border-radius:13px;
   background:rgba(0,0,0,.32); border:1px solid rgba(255,255,255,.06);
@@ -132,11 +141,6 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .tab-content{ display:none; flex:1; min-height:0; flex-direction:column; gap:5px; overflow:hidden; }
 .tab-content.active{ display:flex; }
 
-/* Mode plein écran (éditeur caché) */
-.mobile-mode-preview .editor-section{ display:none; }
-.mobile-mode-preview .mobile-toggle-editor{ display:flex; }
-
-/* Section éditeur (repliable) */
 .editor-section{
   display:flex; flex-direction:column; min-height:0;
   border-radius:14px; overflow:hidden;
@@ -148,7 +152,6 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 }
 .editor-section.hidden{ display:none; }
 
-/* Sub-tabs GROS et tactiles */
 .sub-tabs{
   display:flex; gap:4px; padding:6px 8px 4px 8px;
   flex:0 0 auto; align-items:center;
@@ -170,7 +173,6 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .sub-tab:active{ transform:scale(.95); }
 .sub-tabs-spacer{ flex:1; }
 
-/* En-tête éditeur */
 .editor-head{
   display:flex; align-items:center; justify-content:space-between;
   gap:6px; padding:6px 8px 0 8px; margin-bottom:4px; flex:0 0 auto;
@@ -187,7 +189,6 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .editor-meta.has-content .dot-live{ background:#22c55e; box-shadow: 0 0 4px #22c55e; }
 .editor-meta.has-content{ color:#86efac; }
 
-/* BOUTONS éditeur 40px */
 .editor-actions{ display:flex; gap:6px; flex:0 0 auto; }
 .icon-btn{
   width:40px; height:40px; border-radius:11px;
@@ -204,7 +205,6 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .icon-btn.danger{ color:#f87171; }
 .icon-btn.danger:active{ background:rgba(239,68,68,.15); }
 
-/* Editor wrap */
 .editor-wrap{ position:relative; flex:1; min-height:0; display:flex; overflow:hidden; margin:0 8px 8px 8px; border-radius:10px; }
 .editor-lines{
   flex:0 0 28px; padding:10px 5px 30px 0;
@@ -245,7 +245,6 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .syntax-overlay .tok-cmt{ color:#64748b; font-style:italic; }
 textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 
-/* BOUTON COLLER 40px */
 .paste-html{
   position:absolute; right:8px; bottom:8px;
   height:36px; padding:0 12px; border-radius:9px;
@@ -256,7 +255,7 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 }
 .paste-html:active{ transform:scale(.94); background:rgba(255,202,40,.25); }
 
-/* ========================================================= BOUTON EXÉCUTER XXL ========================================================= */
+/* ========================================================= RUN BUTTON ========================================================= */
 .run-bar{ flex:0 0 auto; }
 .btn-run{
   width:100%; height:52px; border-radius:14px;
@@ -274,9 +273,8 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   0%,100%{ transform: scale(1); }
   30%{ transform: scale(1.03); box-shadow: 0 0 30px rgba(252,211,77,.5); }
 }
-.btn-run .kbd{ opacity:.6; font-size:8px; }
 
-/* ========================================================= PREVIEW PLEIN ESPACE ========================================================= */
+/* ========================================================= PREVIEW ========================================================= */
 .preview-section{
   flex:1; min-height:0; display:flex; flex-direction:column;
   border-radius:14px; padding:6px; position:relative;
@@ -296,7 +294,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   transition: width .3s ease, height .3s ease;
 }
 
-/* TOOLBAR FLOTTANTE EN BAS À DROITE (au pouce) */
 .preview-toolbar{
   position:absolute; bottom:calc(10px + env(safe-area-inset-bottom)); right:10px;
   display:flex; flex-direction:column; gap:6px;
@@ -312,10 +309,8 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   transition:.15s ease;
 }
 .pv-btn:active{ transform:scale(.9); background:rgba(255,202,40,.2); color:#fcd34d; }
-.pv-btn.accent{ color:#fcd34d; border-color:rgba(255,202,40,.35); }
 .pv-btn.exit{ background:rgba(239,68,68,.9); color:#fff; border-color:rgba(255,255,255,.3); }
 
-/* DEVICE BADGE en haut à gauche */
 .dim-badge{
   position:absolute; top:10px; left:10px; z-index:10;
   height:32px; padding:0 10px; border-radius:10px;
@@ -329,7 +324,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .dim-badge .device-icon{ font-size:12px; }
 .dim-badge:active{ transform:scale(.95); }
 
-/* DEVICE MENU en bottom sheet */
 .device-menu{
   position:absolute; top:50px; left:10px; z-index:20;
   background:rgba(15,18,25,.98); backdrop-filter:blur(20px);
@@ -379,7 +373,7 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .preview-container.pseudo-fs .preview-info-bar,
 .preview-container:fullscreen .preview-info-bar{ display:flex; }
 
-/* ========================================================= BOTTOM SHEET (mobile) ========================================================= */
+/* ========================================================= BOTTOM SHEET ========================================================= */
 .sheet-overlay{
   position:fixed; inset:0; z-index:10000;
   background:rgba(0,0,0,.6);
@@ -439,7 +433,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .sheet-body::-webkit-scrollbar{ width:4px; }
 .sheet-body::-webkit-scrollbar-thumb{ background:rgba(255,202,40,.3); border-radius:2px; }
 
-/* Grid pour les presets/snippets (2 cols sur mobile = OK) */
 .preset-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .preset-btn{
   min-height:56px; border-radius:13px;
@@ -452,7 +445,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .preset-btn.loaded{ color:#86efac; border-color:rgba(34,197,94,.3); background:rgba(34,197,94,.06); }
 .preset-btn .preset-icon{ font-size:20px; }
 
-/* History list */
 .history-list{ display:flex; flex-direction:column; gap:8px; }
 .history-item{
   padding:14px 16px; border-radius:13px;
@@ -466,7 +458,26 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .history-item-time{ font-size:8px; color:#64748b; font-variant-numeric:tabular-nums; }
 .history-item-preview{ font-size:8px; color:#94a3b8; font-family:"Courier New",monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* Info list */
+/* Sessions */
+.session-item{
+  padding:12px 14px; border-radius:12px;
+  background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.05);
+  cursor:pointer; transition:.15s ease;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  min-height:56px;
+}
+.session-item:active{ background:rgba(255,202,40,.1); border-color:rgba(255,202,40,.2); }
+.session-info{ min-width:0; flex:1; }
+.session-name{ font-size:10px; font-weight:800; color:#e2e8f0; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.session-meta{ font-size:8px; color:#64748b; font-variant-numeric:tabular-nums; }
+.session-delete{
+  width:34px; height:34px; flex:0 0 34px; border-radius:9px;
+  background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.15);
+  color:#f87171; font-size:14px;
+  display:flex; align-items:center; justify-content:center;
+}
+.session-delete:active{ background:rgba(239,68,68,.2); }
+
 .info-list{ display:flex; flex-direction:column; gap:10px; }
 .info-item{
   display:flex; align-items:flex-start; gap:12px;
@@ -487,7 +498,7 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   font-size:7px; color:#475569; letter-spacing:.14em; text-transform:uppercase;
 }
 
-/* ========================================================= CONSOLE FLOTTANTE ========================================================= */
+/* ========================================================= CONSOLE ========================================================= */
 .console-fab{
   position:fixed;
   bottom:calc(84px + env(safe-area-inset-bottom));
@@ -512,7 +523,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .console-fab .console-dot.hidden{ display:none; }
 .console-fab .console-dot.has-warn{ background:#facc15; box-shadow: 0 0 8px rgba(250,204,21,.6); }
 
-/* Console sheet plein écran */
 .console-sheet-body{
   background:rgba(0,0,0,.4); border-radius:12px;
   padding:12px; min-height:200px; max-height:60dvh; overflow-y:auto;
@@ -522,6 +532,7 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   -webkit-overflow-scrolling: touch;
 }
 .log-line{ display:block; }
+.log-line.hidden-filter{ display:none; }
 .log-line .prefix{ color:#64748b; font-weight:700; }
 .log-line .info{ color:#cbd5e1; }
 .log-line .warn{ color:#facc15; font-weight:700; }
@@ -562,7 +573,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 .extract-info.ko{ color:#fca5a5; }
 textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !important; cursor:default; }
 
-/* Boutons extractor 52px */
 .btn-extract{
   width:100%; height:52px; border-radius:14px;
   color:#a5b4fc; font-weight:800; font-size:10px; letter-spacing:.06em;
@@ -594,7 +604,7 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
 }
 .toast-undo button:active{ background:rgba(255,202,40,.25); }
 
-/* ========================================================= INSTALL BAR ========================================================= */
+/* ========================================================= INSTALL ========================================================= */
 .install-bar{
   position:fixed; bottom:calc(12px + env(safe-area-inset-bottom)); left:50%;
   transform:translateX(-50%) translateY(120%);
@@ -621,14 +631,12 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
 .install-no{ color:#94a3b8; background:transparent; border-color:rgba(255,255,255,.08); }
 .install-no:active{ background:rgba(255,255,255,.06); }
 
-/* ========================================================= FOOTER ========================================================= */
 .footer{
   height:14px; min-height:14px; display:flex; align-items:center; justify-content:center;
   color:#334155; font-size:6px; letter-spacing:.14em; text-transform:uppercase;
   margin-top:4px; flex:0 0 auto;
 }
 
-/* ========================================================= RESPONSIVE ========================================================= */
 @media (max-height:700px){
   .header{ height:40px; min-height:40px; margin-bottom:4px; }
   .brand-logo{ width:28px; height:28px; flex-basis:28px; }
@@ -643,7 +651,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
   .status-badge{ display:none; }
 }
 @media (min-width:600px){
-  /* Sur tablette/desktop, on agrandit */
   .app-inner{ max-width:720px; }
 }
 </style>
@@ -655,7 +662,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
 
 <div class="app">
   <div class="app-inner">
-    <!-- HEADER compact -->
     <header class="header">
       <div class="brand">
         <div class="brand-logo"><span>L</span></div>
@@ -663,23 +669,23 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
           <div class="brand-name">Labcode</div>
           <div class="brand-sub">Component Sandbox</div>
         </div>
+        <div id="saveIndicator" class="save-indicator"></div>
       </div>
       <div class="header-right">
         <div id="statusBadge" class="status-badge">
           <span class="dot"></span>
           <span id="statusBadgeText">READY</span>
         </div>
-        <button class="header-btn" onclick="openSheet('info')" aria-label="Info">ⓘ</button>
+        <button class="header-btn" onclick="openSheet('sessions')" aria-label="Projets" title="Mes projets">📁</button>
+        <button class="header-btn" onclick="openSheet('info')" aria-label="Info" title="Info">ⓘ</button>
       </div>
     </header>
 
-    <!-- TABS gros -->
     <div class="tabs" role="tablist">
       <button class="tab-btn active" id="tabSandbox" role="tab" aria-selected="true" onclick="switchTab('editor-tab', this)">🧪 Sandbox</button>
       <button class="tab-btn" id="tabExtractor" role="tab" aria-selected="false" onclick="switchTab('extractor-tab', this)">✂️ Extractor</button>
     </div>
 
-    <!-- SANDBOX TAB -->
     <div id="editor-tab" class="tab-content active">
       <section class="editor-section" id="editorSection">
         <div class="sub-tabs">
@@ -716,7 +722,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
         </div>
       </section>
 
-      <!-- Bouton Exécuter XXL -->
       <div class="run-bar">
         <button class="btn-run" id="runBtn" onclick="runSandbox()">
           <span>⚡</span>
@@ -724,7 +729,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
         </button>
       </div>
 
-      <!-- Preview pleine largeur -->
       <section class="preview-section glass" id="previewSection">
         <div class="preview-container" id="previewContainer">
           <iframe id="labPreview" title="Aperçu"
@@ -744,7 +748,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
             <div class="device-item" data-device="desktop" onclick="selectDevice('desktop')"><span>🖥️</span><span>Desktop</span><span class="dv-dim">1280</span></div>
           </div>
 
-          <!-- Toolbar flottante en bas à droite -->
           <div class="preview-toolbar">
             <button class="pv-btn" onclick="reloadPreview()" title="Recharger">⟳</button>
             <button class="pv-btn" id="fsBtn" onclick="toggleFullscreen()" title="Plein écran">⛶</button>
@@ -754,17 +757,14 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
         </div>
       </section>
 
-      <!-- Bouton "Voir code" flottant si éditeur caché -->
       <button class="console-fab" id="showEditorFab" style="display:none;" onclick="showEditor()" aria-label="Voir code">📝</button>
 
-      <!-- Bouton Console flottant -->
       <button class="console-fab" id="consoleFab" onclick="openSheet('console')" aria-label="Console">
         🖥
         <span class="console-dot hidden" id="consoleDot">0</span>
       </button>
     </div>
 
-    <!-- EXTRACTOR TAB -->
     <div id="extractor-tab" class="tab-content">
       <section class="editor-section" style="flex:1;">
         <div class="editor-head">
@@ -818,7 +818,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
       </button>
     </div>
 
-    <!-- BARRE OUTILS BAS (6 boutons) -->
     <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; flex:0 0 auto; margin-top:4px;">
       <button class="header-btn" onclick="openSheet('presets')" title="CDN" style="width:100%;">📚</button>
       <button class="header-btn" onclick="openSheet('snippets')" title="Snippets" style="width:100%;">⚡</button>
@@ -829,8 +828,6 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
     <footer class="footer">Labcode · Laiche Brahim · Paris · 2026</footer>
   </div>
 </div>
-
-<!-- ========================================================= BOTTOM SHEETS ========================================================= -->
 
 <!-- Sheet INFO -->
 <div class="sheet-overlay" id="infoOverlay" onclick="closeSheet('info')"></div>
@@ -849,24 +846,38 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
   <div class="sheet-body">
     <div class="info-list">
       <div class="info-item">
+        <div class="info-item-icon">💾</div>
+        <div class="info-item-body">
+          <div class="info-item-title">Sauvegarde auto</div>
+          <div class="info-item-desc">Ton code est enregistré en continu. Un point vert apparaît près du logo à chaque sauvegarde.</div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">📁</div>
+        <div class="info-item-body">
+          <div class="info-item-title">Mes projets</div>
+          <div class="info-item-desc">Bouton 📁 en haut à droite : sauvegarde plusieurs projets nommés et rechargeles en un tap.</div>
+        </div>
+      </div>
+      <div class="info-item">
         <div class="info-item-icon">🧪</div>
         <div class="info-item-body">
           <div class="info-item-title">Multi-fichiers</div>
-          <div class="info-item-desc">HTML / CSS / JS séparés, assemblés au run. Mode <b>📄</b> pour tout dans un seul bloc.</div>
+          <div class="info-item-desc">HTML / CSS / JS séparés. Mode <b>📄</b> pour tout dans un seul bloc.</div>
         </div>
       </div>
       <div class="info-item">
         <div class="info-item-icon">📱</div>
         <div class="info-item-body">
-          <div class="info-item-title">Simulateur de device</div>
-          <div class="info-item-desc">Badge en haut à gauche de la preview : iPhone SE/14, iPad ou Desktop.</div>
+          <div class="info-item-title">Device</div>
+          <div class="info-item-desc">Badge en haut à gauche de la preview pour tester iPhone / iPad / Desktop.</div>
         </div>
       </div>
       <div class="info-item">
         <div class="info-item-icon">▼</div>
         <div class="info-item-body">
           <div class="info-item-title">Masquer l'éditeur</div>
-          <div class="info-item-desc">Bouton <b>▼</b> dans l'éditeur → passe en mode preview plein écran. Bouton <b>📝</b> pour le rouvrir.</div>
+          <div class="info-item-desc">Bouton <b>▼</b> pour passer en preview plein écran. <b>📝</b> pour revenir.</div>
         </div>
       </div>
       <div class="info-item">
@@ -878,6 +889,31 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
       </div>
     </div>
     <div class="info-footer">Made by Brahim Laiche · 2026 · Paris</div>
+  </div>
+</div>
+
+<!-- Sheet SESSIONS -->
+<div class="sheet-overlay" id="sessionsOverlay" onclick="closeSheet('sessions')"></div>
+<div class="sheet" id="sessionsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <div class="sheet-head-left">
+      <div class="sheet-icon">📁</div>
+      <div>
+        <div class="sheet-sub">Sessions</div>
+        <div class="sheet-title">Mes projets</div>
+      </div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet('sessions')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <p style="font-size:10px;color:#94a3b8;margin:0 0 12px 0;line-height:1.5;">
+      Chaque projet est sauvegardé avec son code HTML, CSS et JS.
+    </p>
+    <button onclick="saveCurrentAsSession()" class="w-full h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[9px] font-bold uppercase mb-4" style="width:100%; height:48px; background:rgba(255,202,40,.1); border:1px solid rgba(255,202,40,.2); color:#fcd34d; border-radius:12px; font-size:9px; font-weight:800; text-transform:uppercase;">
+      💾 SAUVEGARDER LE PROJET ACTUEL
+    </button>
+    <div class="history-list" id="sessionList"></div>
   </div>
 </div>
 
@@ -920,7 +956,7 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
   </div>
 </div>
 
-<!-- Sheet FILES (Export/Import) -->
+<!-- Sheet FILES -->
 <div class="sheet-overlay" id="filesOverlay" onclick="closeSheet('files')"></div>
 <div class="sheet" id="filesSheet">
   <div class="sheet-handle"></div>
@@ -987,7 +1023,7 @@ textarea[readonly]{ background:rgba(0,0,0,.28) !important; color:#86efac !import
     <div id="consoleLog" class="console-sheet-body"></div>
     <div class="console-perf-line">
       <div class="console-perf-chip" id="consolePerfChip">⚡ --</div>
-      <div class="console-perf-chip" id="consoleCountChip">0 erreur</div>
+      <div class="console-perf-chip" id="consoleCountChip">0 err · 0 warn</div>
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">
       <button class="btn-extract" style="height:48px; color:#fca5a5; border-color:rgba(239,68,68,.2);" onclick="clearConsole()">🗑 VIDER</button>
@@ -1024,10 +1060,19 @@ const BODY_O = LT + 'body' + '>';
 const BODY_C = LT + '/' + 'body' + '>';
 const DOCTYPE = LT + '!DOCTYPE html>';
 
-const CACHE_KEY = 'labcode_cache_v4';
-const AUTO_FS_KEY = 'labcode_auto_fullscreen';
-const SINGLE_FILE_KEY = 'labcode_single_file';
-const DEVICE_KEY = 'labcode_device';
+/* ========================================================= CLÉS LOCALSTORAGE ========================================================= */
+const LS_KEYS = {
+  HTML: 'labcode_html',
+  CSS: 'labcode_css',
+  JS: 'labcode_js',
+  SINGLE_FILE: 'labcode_single_file',
+  AUTO_FS: 'labcode_auto_fullscreen',
+  DEVICE: 'labcode_device',
+  HISTORY: 'labcode_history',
+  SESSIONS: 'labcode_sessions',
+  RAW_SOURCE: 'labcode_raw_source'
+};
+
 const MAX_LOG_LINES = 8;
 const MAX_HISTORY = 10;
 const UNDO_TIMEOUT = 5000;
@@ -1107,12 +1152,12 @@ const store = (() => {
 
 /* ========================================================= STATE ========================================================= */
 let currentBlobUrl = null;
-let autoFullscreen = store.getItem(AUTO_FS_KEY) !== '0';
-let singleFile = store.getItem(SINGLE_FILE_KEY) === '1';
+let autoFullscreen = store.getItem(LS_KEYS.AUTO_FS) !== '0';
+let singleFile = store.getItem(LS_KEYS.SINGLE_FILE) === '1';
 let saveTimer = null;
 let errorCount = 0, warnCount = 0;
 let consoleFilter = 'all';
-let currentDevice = store.getItem(DEVICE_KEY) || 'responsive';
+let currentDevice = store.getItem(LS_KEYS.DEVICE) || 'responsive';
 let lastRunTime = 0;
 let lastRunSize = 0;
 let history = [];
@@ -1126,7 +1171,7 @@ let activeFile = 'html';
 /* ========================================================= HAPTIC ========================================================= */
 function haptic(ms){ ms = ms || 8; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
 
-/* ========================================================= TOM SOUND ========================================================= */
+/* ========================================================= TOM ========================================================= */
 let audioCtx = null;
 function playTom(freq, duration) {
   try {
@@ -1149,6 +1194,16 @@ document.addEventListener('click', function(e){
   if (e.target.closest('button')) playTom(140, 0.3);
 });
 
+/* ========================================================= SAVE INDICATOR ========================================================= */
+let saveIndicatorTimer = null;
+function showSaveIndicator(){
+  const ind = byId('saveIndicator');
+  if(!ind) return;
+  ind.classList.add('show');
+  clearTimeout(saveIndicatorTimer);
+  saveIndicatorTimer = setTimeout(()=>{ ind.classList.remove('show'); }, 800);
+}
+
 /* ========================================================= TOAST UNDO ========================================================= */
 var toastTimer = null, toastUndoCallback = null;
 function showUndoToast(message, onUndo) {
@@ -1167,6 +1222,43 @@ function showUndoToast(message, onUndo) {
   toastTimer = setTimeout(function(){ el.style.opacity = '0'; el.style.transition = '.3s'; setTimeout(function(){ el.remove(); }, 300); }, UNDO_TIMEOUT);
 }
 
+/* ========================================================= PERSISTANCE ========================================================= */
+function saveFiles(){
+  store.setItem(LS_KEYS.HTML, files.html);
+  store.setItem(LS_KEYS.CSS, files.css);
+  store.setItem(LS_KEYS.JS, files.js);
+  store.setItem(LS_KEYS.SINGLE_FILE, singleFile ? '1' : '0');
+  showSaveIndicator();
+}
+
+function saveHistory(){
+  try { store.setItem(LS_KEYS.HISTORY, JSON.stringify(history.slice(-MAX_HISTORY))); } catch(e){}
+}
+
+function loadFiles(){
+  try {
+    files.html = store.getItem(LS_KEYS.HTML) || '';
+    files.css = store.getItem(LS_KEYS.CSS) || '';
+    files.js = store.getItem(LS_KEYS.JS) || '';
+  } catch (e) {
+    files.html = ''; files.css = ''; files.js = '';
+  }
+  singleFile = store.getItem(LS_KEYS.SINGLE_FILE) === '1';
+
+  if (singleFile) {
+    byId('sandboxCode').value = files.html;
+    byId('singleFileBtn').classList.add('active');
+    byId('editorTitle').textContent = 'SINGLE';
+    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = '0.4'; });
+  } else {
+    byId('sandboxCode').value = files.html;
+  }
+
+  /* Restaure la source brute de l'extractor */
+  const raw = store.getItem(LS_KEYS.RAW_SOURCE) || '';
+  if(raw) byId('rawSource').value = raw;
+}
+
 /* ========================================================= BOTTOM SHEETS ========================================================= */
 function openSheet(name) {
   var overlay = byId(name + 'Overlay');
@@ -1175,6 +1267,7 @@ function openSheet(name) {
   if (name === 'presets') refreshPresets();
   if (name === 'snippets') buildSnippets();
   if (name === 'history') buildHistory();
+  if (name === 'sessions') renderSessions();
   if (name === 'console') { setTimeout(function(){ scrollConsoleToBottom(); }, 250); }
   overlay.classList.add('open');
   sheet.classList.add('open');
@@ -1188,8 +1281,8 @@ function closeSheet(name) {
   sheet.classList.remove('open');
 }
 
-/* Swipe down pour fermer les sheets */
-['info','presets','snippets','files','history','console'].forEach(function(name){
+/* Swipe down pour fermer */
+['info','presets','snippets','files','history','console','sessions'].forEach(function(name){
   var sheet = byId(name + 'Sheet');
   if (!sheet) return;
   var startY = 0, currentY = 0, dragging = false;
@@ -1253,7 +1346,7 @@ function switchSubTab(file) {
 
 function toggleSingleFile() {
   singleFile = !singleFile;
-  store.setItem(SINGLE_FILE_KEY, singleFile ? '1' : '0');
+  store.setItem(LS_KEYS.SINGLE_FILE, singleFile ? '1' : '0');
   byId('singleFileBtn').classList.toggle('active', singleFile);
   if (singleFile) {
     var html = files.html || '', css = files.css || '', js = files.js || '';
@@ -1279,7 +1372,7 @@ function toggleSingleFile() {
     byId('sandboxCode').value = files.html;
   }
   handleCodeInput();
-  saveAllFiles();
+  saveFiles();
 }
 
 /* ========================================================= LINES + SYNTAX ========================================================= */
@@ -1335,34 +1428,7 @@ function handleCodeInput() {
   updateEditorMeta();
   updateSyntaxOverlay();
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveAllFiles, 300);
-}
-
-function saveAllFiles() {
-  try { store.setItem(CACHE_KEY, JSON.stringify({ html: files.html, css: files.css, js: files.js })); } catch (e) {}
-}
-
-function loadFiles() {
-  try {
-    var raw = store.getItem(CACHE_KEY);
-    if (raw) {
-      var data = JSON.parse(raw);
-      files.html = data.html || '';
-      files.css = data.css || '';
-      files.js = data.js || '';
-    }
-  } catch (e) {
-    store.removeItem(CACHE_KEY);
-    files.html = ''; files.css = ''; files.js = '';
-  }
-  if (singleFile) {
-    byId('sandboxCode').value = files.html;
-    byId('singleFileBtn').classList.add('active');
-    byId('editorTitle').textContent = 'SINGLE';
-    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = '0.4'; });
-  } else {
-    byId('sandboxCode').value = files.html;
-  }
+  saveTimer = setTimeout(saveFiles, 300);
 }
 
 /* ========================================================= PASTE ========================================================= */
@@ -1385,6 +1451,8 @@ async function pasteInto(id) {
         consoleLogger('⚠️ Tu as collé le code source de Labcode. Boucle infinie !', 'warn');
       }
     } else {
+      byId(id).value = text;
+      store.setItem(LS_KEYS.RAW_SOURCE, text);
       updateRawMeta();
     }
     haptic(8);
@@ -1410,7 +1478,7 @@ function clearEditor() {
   });
 }
 
-/* Tab → snippets ou espaces */
+/* Tab → snippets */
 byId('sandboxCode').addEventListener('keydown', function(e){
   if (e.key !== 'Tab' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
   e.preventDefault();
@@ -1529,7 +1597,8 @@ function sandboxHook() {
     'clearRaw','extractBlock','copyExtraction','sendExtractionToLab','togglePreset',
     'loadSnippet','restoreHistory','dismissInstall','installPwa','applyDevice',
     'handleCodeInput','updateRawMeta','updateResultMeta','updateEditorMeta',
-    'openSheet','closeSheet','hideEditor','showEditor'];
+    'openSheet','closeSheet','hideEditor','showEditor','saveCurrentAsSession',
+    'loadSession','deleteSession','renderSessions'];
   for (var si = 0; si < STUBS.length; si++) {
     if (typeof window[STUBS[si]] !== 'function') window[STUBS[si]] = function(){};
   }
@@ -1615,6 +1684,7 @@ function pushHistory() {
   history.push(entry);
   if (history.length > MAX_HISTORY) history.shift();
   historyIndex = history.length - 1;
+  saveHistory();
 }
 
 function runSandbox() {
@@ -1691,7 +1761,13 @@ function exitFullscreen() {
   updateFsButton(); haptic(8);
 }
 function toggleFullscreen() { isFullscreen() ? exitFullscreen() : enterFullscreen(); }
-function toggleAutoFs() { autoFullscreen = !autoFullscreen; store.setItem(AUTO_FS_KEY, autoFullscreen ? '1' : '0'); updateAutoFsButton(); haptic(10); }
+function toggleAutoFs() {
+  autoFullscreen = !autoFullscreen;
+  store.setItem(LS_KEYS.AUTO_FS, autoFullscreen ? '1' : '0');
+  updateAutoFsButton();
+  showSaveIndicator();
+  haptic(10);
+}
 function updateAutoFsButton() {
   var b = byId('autoFsBtn');
   b.classList.toggle('active', autoFullscreen);
@@ -1724,9 +1800,10 @@ document.addEventListener('click', function(e){
 
 function selectDevice(device) {
   currentDevice = device;
-  store.setItem(DEVICE_KEY, device);
+  store.setItem(LS_KEYS.DEVICE, device);
   applyDevice();
   byId('deviceMenu').classList.remove('open');
+  showSaveIndicator();
   haptic(8);
 }
 
@@ -1858,13 +1935,131 @@ function restoreHistory(idx) {
   if (!h) return;
   files.html = h.html; files.css = h.css; files.js = h.js;
   singleFile = !!h.single;
-  store.setItem(SINGLE_FILE_KEY, singleFile ? '1' : '0');
+  store.setItem(LS_KEYS.SINGLE_FILE, singleFile ? '1' : '0');
   byId('singleFileBtn').classList.toggle('active', singleFile);
   byId('sandboxCode').value = singleFile ? files.html : files[activeFile];
   handleCodeInput();
   historyIndex = idx;
   consoleLogger('Historique restauré (#' + (idx + 1) + ').');
   haptic(10);
+}
+
+/* ========================================================= SESSIONS ========================================================= */
+function getSessions(){
+  try {
+    var raw = store.getItem(LS_KEYS.SESSIONS);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch(e){ return []; }
+}
+function setSessions(arr){
+  try { store.setItem(LS_KEYS.SESSIONS, JSON.stringify(arr)); } catch(e){}
+}
+
+function renderSessions(){
+  var list = byId('sessionList');
+  var sessions = getSessions();
+  list.innerHTML = '';
+
+  if (sessions.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:#64748b;font-size:10px;padding:24px;">Aucun projet sauvegardé</div>';
+    return;
+  }
+
+  sessions.forEach(function(s, idx){
+    var item = document.createElement('div');
+    item.className = 'session-item';
+    var date = new Date(s.savedAt);
+    var dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    var size = s.html ? (new Blob([s.html]).size / 1024).toFixed(1) : '0';
+    var fileCount = [s.html, s.css, s.js].filter(function(x){ return x && x.trim(); }).length;
+    item.innerHTML =
+      '<div class="session-info">' +
+        '<div class="session-name">' + escapeHtml(s.name || 'Sans nom') + '</div>' +
+        '<div class="session-meta">' + dateStr + ' · ' + size + ' Ko · ' + fileCount + ' fichier(s)' + '</div>' +
+      '</div>' +
+      '<button class="session-delete" data-idx="' + idx + '" title="Supprimer">✕</button>';
+    item.onclick = function(e){
+      if (e.target.closest('.session-delete')) return;
+      loadSession(idx);
+    };
+    item.querySelector('.session-delete').onclick = function(e){
+      e.stopPropagation();
+      deleteSession(idx);
+    };
+    list.appendChild(item);
+  });
+}
+
+function saveCurrentAsSession(){
+  /* Demande un nom via prompt intégré */
+  var defaultName = 'Snippet ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  var name = window.prompt('Nom du projet :', defaultName);
+  if (!name || !name.trim()) return;
+  name = name.trim();
+
+  var sessions = getSessions();
+  var existingIdx = sessions.findIndex(function(s){ return s.name === name; });
+  var entry = {
+    name: name,
+    html: files.html,
+    css: files.css,
+    js: files.js,
+    single: singleFile,
+    savedAt: Date.now()
+  };
+
+  if (existingIdx !== -1){
+    sessions[existingIdx] = entry;
+    consoleLogger('✅ Projet "' + name + '" mis à jour');
+  } else {
+    sessions.unshift(entry);
+    consoleLogger('✅ Projet "' + name + '" sauvegardé');
+  }
+  if (sessions.length > 20) sessions.length = 20;
+  setSessions(sessions);
+  renderSessions();
+  haptic(12);
+}
+
+function loadSession(idx){
+  var sessions = getSessions();
+  var s = sessions[idx];
+  if (!s) return;
+
+  files.html = s.html || '';
+  files.css = s.css || '';
+  files.js = s.js || '';
+  singleFile = !!s.single;
+  store.setItem(LS_KEYS.SINGLE_FILE, singleFile ? '1' : '0');
+  byId('singleFileBtn').classList.toggle('active', singleFile);
+
+  if (singleFile){
+    byId('sandboxCode').value = files.html;
+    byId('editorTitle').textContent = 'SINGLE';
+    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = '0.4'; });
+  } else {
+    activeFile = 'html';
+    byId('sandboxCode').value = files.html;
+    byId('editorTitle').textContent = 'HTML';
+    document.querySelectorAll('.sub-tab[data-file]').forEach(function(b){ b.style.opacity = ''; b.classList.toggle('active', b.dataset.file === 'html'); });
+  }
+
+  handleCodeInput();
+  saveFiles();
+  closeSheet('sessions');
+  consoleLogger('✅ Projet "' + s.name + '" chargé');
+  haptic(12);
+}
+
+function deleteSession(idx){
+  var sessions = getSessions();
+  var name = sessions[idx] ? sessions[idx].name : 'Projet';
+  if (!confirm('Supprimer "' + name + '" ?')) return;
+  sessions.splice(idx, 1);
+  setSessions(sessions);
+  renderSessions();
+  consoleLogger('Projet "' + name + '" supprimé');
 }
 
 /* ========================================================= EXPORT / IMPORT / SHARE ========================================================= */
@@ -1897,6 +2092,7 @@ function importCode() {
       if (!singleFile && activeFile !== 'html') switchSubTab('html');
       else byId('sandboxCode').value = text;
       handleCodeInput();
+      saveFiles();
       consoleLogger('Fichier ' + f.name + ' importé.');
       closeSheet('files');
     };
@@ -1916,18 +2112,19 @@ async function shareCode() {
   haptic(10);
 }
 
-/* ========================================================= KEYBOARD (desktop) ========================================================= */
+/* ========================================================= KEYBOARD ========================================================= */
 document.addEventListener('keydown', function(e){
   var mod = e.ctrlKey || e.metaKey;
   if (e.key === 'Escape') {
     if (byId('previewContainer').classList.contains('pseudo-fs')) exitFullscreen();
-    ['info','presets','snippets','files','history','console'].forEach(function(n){ closeSheet(n); });
+    ['info','presets','snippets','files','history','console','sessions'].forEach(function(n){ closeSheet(n); });
     byId('deviceMenu').classList.remove('open');
   }
   if (!mod) return;
   if (e.key === 'Enter') { e.preventDefault(); runSandbox(); }
   else if (e.key.toLowerCase() === 'k') { e.preventDefault(); clearEditor(); }
   else if (e.key.toLowerCase() === 'f') { e.preventDefault(); toggleFullscreen(); }
+  else if (e.key.toLowerCase() === 's') { e.preventDefault(); saveCurrentAsSession(); }
   else if (e.key === '1') { e.preventDefault(); switchTab('editor-tab', byId('tabSandbox')); }
   else if (e.key === '2') { e.preventDefault(); switchTab('extractor-tab', byId('tabExtractor')); }
   else if (e.key.toLowerCase() === 'z') { e.preventDefault(); openSheet('history'); }
@@ -1960,8 +2157,9 @@ function clearRaw() {
   if (!ta.value) return;
   var b = ta.value;
   ta.value = ''; updateRawMeta();
+  store.removeItem(LS_KEYS.RAW_SOURCE);
   haptic(15);
-  showUndoToast('Source vidée', function(){ ta.value = b; updateRawMeta(); });
+  showUndoToast('Source vidée', function(){ ta.value = b; updateRawMeta(); store.setItem(LS_KEYS.RAW_SOURCE, b); });
 }
 
 function extractBlock(type) {
@@ -2037,11 +2235,19 @@ async function installPwa() {
 
 /* ========================================================= INIT ========================================================= */
 (function init() {
-  try {
-    var oldRaw = store.getItem('labcode_cache_v3');
-    if (oldRaw && oldRaw.indexOf('sandboxHook') !== -1) store.removeItem('labcode_cache_v3');
-  } catch (e) {}
+  /* Restaure l'état sauvegardé */
   loadFiles();
+
+  /* Restaure l'historique */
+  try {
+    var rawHistory = store.getItem(LS_KEYS.HISTORY);
+    if (rawHistory) {
+      history = JSON.parse(rawHistory) || [];
+      if (!Array.isArray(history)) history = [];
+      historyIndex = history.length - 1;
+    }
+  } catch(e){ history = []; }
+
   updateEditorMeta();
   updateRawMeta();
   updateResultMeta();
@@ -2049,11 +2255,11 @@ async function installPwa() {
   updateFsButton();
   updateConsoleCount();
   applyDevice();
-  if (files.html && files.html.indexOf('sandboxHook') !== -1) {
-    consoleLogger('⚠️ Cache contient du code Labcode. Vide l\'éditeur.', 'warn');
-  } else {
-    consoleLogger('Console prête.');
-  }
+
+  consoleLogger('Console prête.');
+  consoleLogger('💾 Sauvegarde automatique activée');
+  if (history.length > 0) consoleLogger('↺ ' + history.length + ' entrée(s) dans l\'historique');
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); });
   }
