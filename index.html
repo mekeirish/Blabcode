@@ -357,6 +357,12 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   margin:0; border-radius:0; border:none; z-index:9999;
   padding:0; background:#fff;
 }
+.preview-container.pseudo-fs{ transition:none; }
+.preview-container:fullscreen{ transition:none; }
+.preview-section:has(.pseudo-fs){
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+  transform:none; filter:none;
+}
 .preview-container.pseudo-fs iframe{ border-radius:0; box-shadow:none; border:none; width:100% !important; height:100% !important; }
 .preview-container.pseudo-fs .preview-toolbar{ bottom:calc(14px + env(safe-area-inset-bottom)); right:14px; }
 .preview-container.pseudo-fs .pv-btn{ width:50px; height:50px; font-size:18px; }
@@ -1646,20 +1652,10 @@ function buildFinalCode() {
   if (singleFile) return injectHook(files.html || '');
   var html = files.html || '', css = files.css || '', js = files.js || '';
   var hasFullDoc = /<html[\s>]/i.test(html) || /<!doctype/i.test(html);
-  if (hasFullDoc) {
-    var out = html;
-    if (css) {
-      var styleBlock = STYLE_O + '\n' + css + '\n' + STYLE_C;
-      if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, styleBlock + '\n</head>');
-      else out = styleBlock + '\n' + out;
-    }
-    if (js) {
-      var jsBlock = TAG_S + '\n' + js + '\n' + TAG_E;
-      if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, jsBlock + '\n</body>');
-      else out += '\n' + jsBlock;
-    }
-    return injectHook(out);
-  }
+if (hasFullDoc) {
+  if (css || js) consoleLogger('Document complet détecté : onglets CSS/JS ignorés.', 'warn');
+  return injectHook(html);
+}
   var finalHtml = DOCTYPE + '\n' + HEAD_O + '\n' +
     '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
     (css ? STYLE_O + '\n' + css + '\n' + STYLE_C + '\n' : '') +
@@ -1696,29 +1692,35 @@ function runSandbox() {
     setStatusBadge('EMPTY', 'err');
     haptic(20); return;
   }
-  var t0 = performance.now();
-  clearConsole();
-  haptic(15);
-  setStatusBadge('RUN', 'run');
+var t0 = performance.now();
+clearConsole();
+haptic(15);
+setStatusBadge('RUN', 'run');
 
-  var pc = byId('previewContainer');
-  pc.classList.remove('flash'); void pc.offsetWidth; pc.classList.add('flash');
-  var btn = byId('runBtn');
-  btn.classList.remove('flash'); void btn.offsetWidth; btn.classList.add('flash');
+var pc = byId('previewContainer');
+pc.classList.remove('flash'); void pc.offsetWidth; pc.classList.add('flash');
+var btn = byId('runBtn');
+btn.classList.remove('flash'); void btn.offsetWidth; btn.classList.add('flash');
 
-  var blob = new Blob([finalCode], { type: 'text/html;charset=utf-8' });
-  var prevUrl = currentBlobUrl;
-  currentBlobUrl = URL.createObjectURL(blob);
-  byId('labPreview').src = currentBlobUrl;
+var blob = new Blob([finalCode], { type: 'text/html;charset=utf-8' });
+var prevUrl = currentBlobUrl;
+currentBlobUrl = URL.createObjectURL(blob);
+var newUrl = currentBlobUrl;
+var loadPreview = function(){
+  if (newUrl !== currentBlobUrl) { URL.revokeObjectURL(newUrl); return; }
+  byId('labPreview').src = newUrl;
   if (prevUrl) URL.revokeObjectURL(prevUrl);
+};
+var needFs = autoFullscreen && !isFullscreen();
+if (needFs) enterFullscreen();
+if (needFs) setTimeout(loadPreview, 350); else loadPreview();
 
-  pushHistory();
-  lastRunTime = Math.round(performance.now() - t0);
-  lastRunSize = (new Blob([finalCode]).size / 1024).toFixed(1);
-  byId('consolePerfChip').textContent = '⚡ ' + lastRunTime + 'ms · ' + lastRunSize + ' Ko';
+pushHistory();
+lastRunTime = Math.round(performance.now() - t0);
+lastRunSize = (new Blob([finalCode]).size / 1024).toFixed(1);
+byId('consolePerfChip').textContent = '⚡ ' + lastRunTime + 'ms · ' + lastRunSize + ' Ko';
 
-  if (autoFullscreen && !isFullscreen()) enterFullscreen();
-  setTimeout(function(){ setStatusBadge(errorCount > 0 ? 'ERR' : 'DONE', errorCount > 0 ? 'err' : 'ok'); }, 500);
+setTimeout(function(){ setStatusBadge(errorCount > 0 ? 'ERR' : 'DONE', errorCount > 0 ? 'err' : 'ok'); }, needFs ? 900 : 500);
 }
 
 window.addEventListener('message', function(e){
