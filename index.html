@@ -45,7 +45,7 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
 .app{ position:relative; z-index:2; width:100%; height:100dvh; min-height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
 .app-inner{
   width:100%; max-width:680px; height:100%; margin:auto;
-  padding: max(6px,env(safe-area-inset-top)) 8px max(6px,env(safe-area-inset-bottom));
+  padding: max(6px,env(safe-area-inset-top)) 8px max(10px,env(safe-area-inset-bottom));
   display:flex; flex-direction:column; overflow:hidden;
 }
 .glass{
@@ -130,6 +130,8 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
   flex: 0 1 45%;
 }
 .editor-section.hidden{ display:none; }
+.editor-section.code-hidden{ flex:0 0 auto; }
+.editor-section.code-hidden .editor-wrap{ display:none; }
 
 .sub-tabs{
   display:flex; gap:4px; padding:6px 8px 4px 8px;
@@ -181,6 +183,7 @@ button{ -webkit-user-select:none; user-select:none; cursor:pointer; }
   color:#fcd34d; background:rgba(255,202,40,.13);
   border-color:rgba(255,202,40,.28);
 }
+.icon-btn.flipped svg{ transform: rotate(180deg); }
 .icon-btn.danger{ color:#f87171; }
 .icon-btn.danger:active{ background:rgba(239,68,68,.15); }
 
@@ -507,12 +510,9 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   font-size:10px; color:#475569; letter-spacing:.14em; text-transform:uppercase;
 }
 
-/* ========================================================= CONSOLE ========================================================= */
 .console-fab{
-  position:fixed;
-  bottom:calc(84px + env(safe-area-inset-bottom));
-  left:12px; z-index:8;
-  width:48px; height:48px; border-radius:14px;
+  position:relative;
+  width:48px; height:48px; flex:0 0 48px; border-radius:12px;
   background:rgba(15,18,25,.9); backdrop-filter:blur(12px);
   border:1px solid rgba(255,255,255,.12);
   color:#cbd5e1; font-size:18px;
@@ -643,6 +643,18 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
   .footer{ display:none; }
   .status-badge{ display:none; }
 }
+@media (max-height:700px){
+  .editor-wrap textarea{ min-height:70px; }
+  .preview-section{ min-height:60px; }
+}
+@media (max-height:520px){
+  .editor-section{ flex:0 1 26%; }
+  .editor-wrap textarea{ min-height:44px; }
+  .run-bar .btn-run,
+  .run-bar .paste-html,
+  .run-bar .console-fab{ height:40px; }
+  .preview-section{ min-height:40px; }
+}
 @media (min-width:600px){
   .app-inner{ max-width:720px; }
 }
@@ -682,6 +694,8 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
     <button class="sub-tab active" data-file="html" onclick="switchSubTab('html')">HTML</button>
     <button class="sub-tab" data-file="css" onclick="switchSubTab('css')">CSS</button>
     <button class="sub-tab" data-file="js" onclick="switchSubTab('js')">JS</button>
+    <button class="sub-tab" onclick="decreaseFontSize()" title="Réduire la taille du texte" style="min-width:40px; padding:0 8px;">A−</button>
+    <button class="sub-tab" onclick="increaseFontSize()" title="Agrandir la taille du texte" style="min-width:40px; padding:0 8px;">A+</button>
     <span class="sub-tabs-spacer"></span>
     <button class="sub-tab" id="singleFileBtn" onclick="toggleSingleFile()" title="Single file"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" opacity="0.9"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></button>
   </div>
@@ -712,8 +726,12 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 </section>
 
 <div class="run-bar" style="display:flex; gap:6px;">
-  <button class="paste-html" onclick="pasteInto('sandboxCode')" style="position:static; width:auto; flex:0 0 auto; margin:0; display:flex; align-items:center; justify-content:center; padding:0 14px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M19 2h-4.18C14.4 .84 13.3 0 12 0S9.6.84 9.18 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>COLLER</button>
-  <button class="btn-run" id="runBtn" onclick="runSandbox()" style="flex:1;">EXÉCUTER</button>
+  <button class="btn-run" onclick="pasteInto('sandboxCode')" style="position:static; width:auto; flex:0 0 auto; margin:0; display:flex; align-items:center; justify-content:center; padding:0 14px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M19 2h-4.18C14.4 .84 13.3 0 12 0S9.6.84 9.18 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>COLLER</button>
+  <button class="paste-html" id="runBtn" onclick="runSandbox()" style="flex:1;">EXÉCUTER</button>
+  <button class="console-fab" id="consoleFab" onclick="openSheet('console')" aria-label="Console">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-2h11v2zm0-4H4v-2h11v2zm0-4H4V8h11v2z"/></svg>
+    <span class="console-dot hidden" id="consoleDot">0</span>
+  </button>
 </div>
 
 <section class="preview-section glass" id="previewSection">
@@ -736,7 +754,6 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
     </div>
 
     <div class="preview-toolbar">
-      <button class="pv-btn" id="pvEditorBtn" onclick="showEditor()" title="Afficher le code" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg></button>
       <button class="pv-btn" onclick="reloadPreview()" title="Recharger"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
       <button class="pv-btn" id="fsBtn" onclick="toggleFullscreen()" title="Plein écran"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
     </div>
@@ -746,15 +763,11 @@ textarea.has-syntax{ color:transparent; caret-color:#cbd5e1; }
 </section>
 
 
-<button class="console-fab" id="consoleFab" onclick="openSheet('console')" aria-label="Console">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-2h11v2zm0-4H4v-2h11v2zm0-4H4V8h11v2z"/></svg>
-  <span class="console-dot hidden" id="consoleDot">0</span>
-</button>
     </div>
 
     <!--#SUPPRIMER:html:extractor-tab-->
 
-<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; flex:0 0 auto; margin-top:4px;">
+<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; flex:0 0 auto; min-height:44px; margin-top:4px;">
   <button class="header-btn" onclick="openSheet('presets')" title="CDN" style="width:100%;"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-5.5 9h11z"/><circle cx="12" cy="17" r="3"/></svg></button>
   <button class="header-btn" onclick="openSheet('snippets')" title="Snippets" style="width:100%;"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 8.1 4.1 14H1.6v-2.5L7.5 5.6zm13.1 9.9l-2.6-2.6 5.9-5.9v2.5l-3.3 6z"/><path d="M3 17.5V21h3.5L18 9.5l-3.5-3.5L3 17.5z"/></svg></button>
   <button class="header-btn" onclick="openSheet('files')" title="Fichiers" style="width:100%;"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></button>
@@ -1013,7 +1026,8 @@ const LS_KEYS = {
   DEVICE: 'labcode_device',
   HISTORY: 'labcode_history',
   SESSIONS: 'labcode_sessions',
-  SOUND: 'labcode_sound'
+  SOUND: 'labcode_sound',
+  FONT_SIZE: 'labcode_font_size'
 };
 
 const MAX_LOG_LINES = 200;
@@ -1126,6 +1140,7 @@ const files = { html: '', css: '', js: '' };
 let activeFile = 'html';
 let uiTimer = null;
 let soundEnabled = store.getItem(LS_KEYS.SOUND) !== '0';
+let editorFontSize = parseInt(store.getItem(LS_KEYS.FONT_SIZE), 10) || 16;
 
 /* ========================================================= HAPTIC ========================================================= */
 function haptic(ms){ ms = ms || 8; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
@@ -1303,17 +1318,18 @@ function closeSheet(name) {
 });
 
 
-/* ========================================================= EDITOR HIDE/SHOW ========================================================= */
 function hideEditor() {
-editorHidden = true;
-byId('editorSection').classList.add('hidden');
-byId('pvEditorBtn').style.display = 'flex';
+editorHidden = !editorHidden;
+byId('editorSection').classList.toggle('code-hidden', editorHidden);
+var hideBtn = byId('hideEditorBtn');
+if (hideBtn) hideBtn.classList.toggle('flipped', editorHidden);
 haptic(10);
 }
 function showEditor() {
 editorHidden = false;
-byId('editorSection').classList.remove('hidden');
-byId('pvEditorBtn').style.display = 'none';
+byId('editorSection').classList.remove('code-hidden');
+var hideBtn = byId('hideEditorBtn');
+if (hideBtn) hideBtn.classList.remove('flipped');
 haptic(10);
 }
 
@@ -1420,6 +1436,31 @@ if (byId('sandboxCode').value.length > 20000) uiTimer = setTimeout(refreshUi, 15
 else refreshUi();
 clearTimeout(saveTimer);
 saveTimer = setTimeout(saveFiles, 300);
+}
+function applyEditorFontSize() {
+  var size = editorFontSize + 'px';
+  var ta = byId('sandboxCode');
+  var lines = byId('lineNumbers');
+  var overlay = byId('syntaxOverlay');
+  if (ta) ta.style.fontSize = size;
+  if (lines) lines.style.fontSize = size;
+  if (overlay) overlay.style.fontSize = size;
+  if (ta && lines) { lines.scrollTop = ta.scrollTop; lines.scrollLeft = ta.scrollLeft; }
+  if (ta && overlay) { overlay.scrollTop = ta.scrollTop; overlay.scrollLeft = ta.scrollLeft; }
+}
+function increaseFontSize() {
+  if (editorFontSize >= 24) return;
+  editorFontSize += 1;
+  store.setItem(LS_KEYS.FONT_SIZE, String(editorFontSize));
+  applyEditorFontSize();
+  haptic(6);
+}
+function decreaseFontSize() {
+  if (editorFontSize <= 10) return;
+  editorFontSize -= 1;
+  store.setItem(LS_KEYS.FONT_SIZE, String(editorFontSize));
+  applyEditorFontSize();
+  haptic(6);
 }
 
 /* ========================================================= PASTE ========================================================= */
@@ -2218,6 +2259,7 @@ updateFsButton();
 updateConsoleCount();
 updateSoundButton();
 applyDevice();
+applyEditorFontSize();
 
 consoleLogger('Console prête.');
 consoleLogger('💾 Sauvegarde automatique activée');
